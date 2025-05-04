@@ -1,0 +1,5 @@
+# requirements.txt
+Flask>=2.1
+python-dotenv>=0.19
+# 如果选择使用 pandas 处理 CSV (更强大但依赖较重), 则取消下面注释
+# pandas>=1.3
