@@ -1,0 +1,64 @@
+{# partials/_meaning_fields.html #}
+{# Renders existing meaning fields and provides a template for new ones #}
+
+{# --- Render Existing/Error Meanings --- #}
+{# Determine which list to render from #}
+{% set meanings_to_render = concept.meanings if concept and not is_edit_error else concept_data_on_error.meanings_on_error if concept_data_on_error else [] %}
+
+{% for meaning in meanings_to_render %}
+<div class="meaning-group border p-3 mb-3 rounded bg-white position-relative shadow-sm"> {# Changed background #}
+    <button type="button" class="btn-close position-absolute top-0 end-0 mt-1 me-1 remove-item-btn" aria-label="移除此含义" title="移除此含义"></button>
+    <div class="row g-2">
+        <div class="col-md-4">
+            <label for="meanings-{{ loop.index0 }}-pos" class="form-label small mb-1">词性 <span class="text-danger">*</span></label>
+            {# Existing items ARE required #}
+            <input type="text" class="form-control form-control-sm" id="meanings-{{ loop.index0 }}-pos" name="meanings[{{ loop.index0 }}][part_of_speech]" value="{{ meaning.part_of_speech }}" placeholder="e.g., n., v., adj." required>
+        </div>
+        <div class="col-md-8">
+            <label for="meanings-{{ loop.index0 }}-def" class="form-label small mb-1">定义 <span class="text-danger">*</span></label>
+            {# Existing items ARE required #}
+            <textarea class="form-control form-control-sm" id="meanings-{{ loop.index0 }}-def" name="meanings[{{ loop.index0 }}][definition]" rows="1" placeholder="释义" required>{{ meaning.definition }}</textarea> {# Rows set to 1 #}
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{# --- Render ONE empty field group IF adding new OR editing and no meanings were submitted --- #}
+{% if not concept or (is_edit_error and not meanings_to_render) %}
+ <div class="meaning-group border p-3 mb-3 rounded bg-white position-relative shadow-sm">
+     {# Hide remove button on the initial empty row for 'add' mode #}
+    <button type="button" class="btn-close position-absolute top-0 end-0 mt-1 me-1 remove-item-btn {% if not concept %}d-none{% endif %}" aria-label="移除此含义" title="移除此含义"></button>
+    <div class="row g-2">
+        <div class="col-md-4">
+            <label for="meanings-{{ meanings_to_render|length }}-pos" class="form-label small mb-1">词性</label> {# Removed asterisk #}
+             {# Initial empty row's inputs are NOT required #}
+            <input type="text" class="form-control form-control-sm" id="meanings-{{ meanings_to_render|length }}-pos" name="meanings[{{ meanings_to_render|length }}][part_of_speech]" placeholder="e.g., n., v., adj.">
+        </div>
+        <div class="col-md-8">
+            <label for="meanings-{{ meanings_to_render|length }}-def" class="form-label small mb-1">定义</label> {# Removed asterisk #}
+             {# Initial empty row's inputs are NOT required #}
+            <textarea class="form-control form-control-sm" id="meanings-{{ meanings_to_render|length }}-def" name="meanings[{{ meanings_to_render|length }}][definition]" rows="1" placeholder="释义"></textarea>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+
+{# --- Template for adding new meaning fields via JS (hidden) --- #}
+<template id="meaningTemplate">
+    <div class="meaning-group border p-3 mb-3 rounded bg-white position-relative shadow-sm">
+        <button type="button" class="btn-close position-absolute top-0 end-0 mt-1 me-1 remove-item-btn" aria-label="移除此含义" title="移除此含义"></button>
+        <div class="row g-2">
+            <div class="col-md-4">
+                <label for="meanings-__INDEX__-pos" class="form-label small mb-1">词性 <span class="text-danger">*</span></label>
+                 {# Dynamically added rows ARE required #}
+                <input type="text" class="form-control form-control-sm" id="meanings-__INDEX__-pos" name="meanings[__INDEX__][part_of_speech]" placeholder="e.g., n., v., adj." required>
+            </div>
+            <div class="col-md-8">
+                <label for="meanings-__INDEX__-def" class="form-label small mb-1">定义 <span class="text-danger">*</span></label>
+                 {# Dynamically added rows ARE required #}
+                <textarea class="form-control form-control-sm" id="meanings-__INDEX__-def" name="meanings[__INDEX__][definition]" rows="1" placeholder="释义" required></textarea>
+            </div>
+        </div>
+    </div>
+</template>

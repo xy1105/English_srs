@@ -1,0 +1,97 @@
+{# partials/_pagination.html #}
+{# Pagination component for list views #}
+{# Expects context variables: current_page, total_pages, pagination_endpoint, pagination_params #}
+
+{% if total_pages > 1 %} {# Only show pagination if more than one page #}
+
+{% set max_visible_pages = 5 %} {# Max number of page links shown around current page #}
+{% set half_visible = max_visible_pages // 2 %}
+
+<nav aria-label="Page navigation">
+  {# Add 'pagination-sm' for smaller buttons, 'flex-wrap' for better mobile layout #}
+  <ul class="pagination pagination-sm justify-content-center flex-wrap">
+
+    {# --- First Page Link --- #}
+    <li class="page-item {% if current_page == 1 %}disabled{% endif %}">
+      {% set page_params_first = pagination_params.copy() %}
+      {% set _ = page_params_first.update({'page': 1}) %}
+      <a class="page-link" href="{{ url_for(pagination_endpoint, **page_params_first) if current_page != 1 else '#' }}" aria-label="First">
+        <span aria-hidden="true">«</span> {# First symbol #}
+      </a>
+    </li>
+
+    {# --- Previous Page Link --- #}
+    <li class="page-item {% if current_page == 1 %}disabled{% endif %}">
+      {% set page_params_prev = pagination_params.copy() %}
+      {% set _ = page_params_prev.update({'page': current_page - 1}) %}
+      <a class="page-link" href="{{ url_for(pagination_endpoint, **page_params_prev) if current_page != 1 else '#' }}" aria-label="Previous">
+        <span aria-hidden="true">‹</span> {# Previous symbol #}
+      </a>
+    </li>
+
+    {# --- Page Number Links Calculation --- #}
+    {# Calculate start and end page numbers to display #}
+    {% set start_page = [1, current_page - half_visible] | max %}
+    {% set end_page = [total_pages, start_page + max_visible_pages - 1] | min %}
+    {# Adjust start page if not enough pages at the end to fill max_visible_pages #}
+    {% if end_page - start_page + 1 < max_visible_pages %}
+      {% set start_page = [1, end_page - max_visible_pages + 1] | max %}
+    {% endif %}
+
+    {# Ellipsis at start? Show page 1 if needed #}
+    {% if start_page > 1 %}
+        {% set page_params_one = pagination_params.copy() %}
+        {% set _ = page_params_one.update({'page': 1}) %}
+        {# Hide on extra small screens to save space #}
+        <li class="page-item d-none d-sm-block"><a class="page-link" href="{{ url_for(pagination_endpoint, **page_params_one) }}">1</a></li>
+        {% if start_page > 2 %}
+             {# Show ellipsis if there's a gap #}
+             <li class="page-item disabled d-none d-sm-block"><span class="page-link">…</span></li>
+        {% endif %}
+    {% endif %}
+
+    {# --- Actual Page Number Links --- #}
+    {% for page_num in range(start_page, end_page + 1) %}
+    <li class="page-item {% if page_num == current_page %}active{% endif %}" {% if page_num == current_page %}aria-current="page"{% endif %}>
+        {% set page_params_num = pagination_params.copy() %}
+        {% set _ = page_params_num.update({'page': page_num}) %}
+        <a class="page-link" href="{{ url_for(pagination_endpoint, **page_params_num) }}">{{ page_num }}</a>
+    </li>
+    {% endfor %}
+
+    {# Ellipsis at end? Show last page if needed #}
+    {% if end_page < total_pages %}
+         {% if end_page < total_pages - 1 %}
+            {# Show ellipsis if there's a gap #}
+            <li class="page-item disabled d-none d-sm-block"><span class="page-link">…</span></li>
+         {% endif %}
+        {% set page_params_last_num = pagination_params.copy() %}
+        {% set _ = page_params_last_num.update({'page': total_pages}) %}
+        {# Only show last page number if it's different from the last displayed number #}
+        {% if total_pages != end_page %}
+             <li class="page-item d-none d-sm-block"><a class="page-link" href="{{ url_for(pagination_endpoint, **page_params_last_num) }}">{{ total_pages }}</a></li>
+        {% endif %}
+    {% endif %}
+
+    {# --- Next Page Link --- #}
+    <li class="page-item {% if current_page >= total_pages %}disabled{% endif %}">
+       {% set page_params_next = pagination_params.copy() %}
+       {% set _ = page_params_next.update({'page': current_page + 1}) %}
+      <a class="page-link" href="{{ url_for(pagination_endpoint, **page_params_next) if current_page < total_pages else '#' }}" aria-label="Next">
+        <span aria-hidden="true">›</span> {# Next symbol #}
+      </a>
+    </li>
+
+    {# --- Last Page Link --- #}
+     <li class="page-item {% if current_page >= total_pages %}disabled{% endif %}">
+        {% set page_params_last = pagination_params.copy() %}
+        {% set _ = page_params_last.update({'page': total_pages}) %}
+      <a class="page-link" href="{{ url_for(pagination_endpoint, **page_params_last) if current_page < total_pages else '#' }}" aria-label="Last">
+        <span aria-hidden="true">»</span> {# Last symbol #}
+      </a>
+    </li>
+
+  </ul>
+</nav>
+
+{% endif %} {# End total_pages > 1 check #}

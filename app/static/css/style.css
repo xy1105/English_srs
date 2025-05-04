@@ -1,0 +1,511 @@
+/* app/static/css/style.css */
+
+/* --- Base & Layout --- */
+:root {
+    --bs-body-font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    --bs-body-font-size: 0.95rem; /* Slightly smaller base font */
+    --bs-body-line-height: 1.6;
+    --bs-link-decoration: none; /* Remove underlines globally */
+
+    /* --- Frosted Glass Variables --- */
+    --frost-blur-amount: 8px; /* Adjust blur intensity (e.g., 5px - 15px) */
+    --frost-bg-light: rgba(248, 249, 250, 0.75); /* Light theme semi-transparent background */
+    /* --frost-bg-dark: rgba(33, 37, 41, 0.75); */ /* Example dark theme background (uncomment if needed) */
+    --frost-border-light: rgba(0, 0, 0, 0.08); /* Subtle border for light theme */
+    /* --frost-border-dark: rgba(255, 255, 255, 0.1); */ /* Example dark theme border (uncomment if needed) */
+    /* Use light theme variables by default */
+    --frost-bg: var(--frost-bg-light);
+    --frost-border: var(--frost-border-light);
+}
+
+/* Optional Dark Mode Adaptation (Uncomment or adapt if you implement dark mode) */
+/*
+@media (prefers-color-scheme: dark) {
+    :root {
+        --frost-bg: var(--frost-bg-dark);
+        --frost-border: var(--frost-border-dark);
+        --bs-body-color: #dee2e6;
+        --bs-body-bg: #212529;
+        // Add other dark mode variable overrides here
+    }
+    .navbar-dark { // Ensure navbar text is light in dark mode
+        --bs-navbar-color: rgba(255, 255, 255, 0.75);
+        --bs-navbar-hover-color: rgba(255, 255, 255, 0.9);
+        --bs-navbar-active-color: #fff;
+        --bs-navbar-brand-color: #fff;
+    }
+    footer.fixed-bottom {
+         background-color: var(--frost-bg-dark); // Use dark variable
+         border-top: 1px solid var(--frost-border-dark);
+         color: #adb5bd;
+    }
+    .dropdown-menu { // Dark dropdown
+        background-color: var(--frost-bg-dark);
+        border: 1px solid var(--frost-border-dark);
+        --bs-dropdown-link-color: #dee2e6;
+        --bs-dropdown-link-hover-color: #fff;
+        --bs-dropdown-link-hover-bg: rgba(255, 255, 255, 0.1);
+        --bs-dropdown-link-active-bg: rgba(13, 110, 253, 0.25); // Example active color
+    }
+     .alert { // Dark alerts
+        --bs-alert-bg: rgba(var(--bs-alert-bg-rgb), 0.6); // More transparent dark alert bg
+        --bs-alert-border-color: rgba(var(--bs-alert-border-rgb), 0.5);
+         color: var(--bs-alert-color); // Bootstrap should handle dark alert text colors
+         -webkit-backdrop-filter: blur(calc(var(--frost-blur-amount) / 1.5));
+         backdrop-filter: blur(calc(var(--frost-blur-amount) / 1.5));
+    }
+}
+*/
+
+body {
+    padding-top: 70px; /* Adjust for sticky navbar height */
+    padding-bottom: 80px; /* Extra space for fixed footer */
+    background-color: #f8f9fa; /* Light gray background */
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    font-family: var(--bs-body-font-family);
+    font-size: var(--bs-body-font-size);
+    line-height: var(--bs-body-line-height);
+    color: #212529; /* Default text color */
+}
+
+main.container {
+    flex-grow: 1; /* Push footer down */
+    width: 100%;
+    max-width: 1200px; /* Limit max width for better readability on large screens */
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+/* --- Navbar (Frosted Glass) --- */
+.navbar.fixed-top { /* Target the fixed navbar specifically */
+    /* Override Bootstrap background */
+    background-color: var(--frost-bg) !important; /* Use variable, !important might be needed */
+    -webkit-backdrop-filter: blur(var(--frost-blur-amount));
+    backdrop-filter: blur(var(--frost-blur-amount));
+    border-bottom: 1px solid var(--frost-border); /* Subtle edge definition */
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06); /* Optional subtle shadow */
+    transition: box-shadow 0.3s ease; /* Keep existing transition */
+}
+/* Adjust link hover for better visibility on frosted background */
+.navbar-nav .nav-link {
+    transition: background-color 0.2s ease, color 0.2s ease;
+    padding: 0.6rem 1rem;
+    border-radius: var(--bs-border-radius-sm); /* Add slight rounding */
+}
+.navbar-nav .nav-link svg {
+    vertical-align: -0.15em;
+    margin-right: 0.4rem;
+}
+.navbar-light .navbar-nav .nav-link.active,
+.navbar-light .navbar-nav .nav-link:hover {
+    color: var(--bs-navbar-active-color, #000); /* Use BS active color or default */
+    background-color: rgba(0, 0, 0, 0.06); /* Darker overlay */
+}
+.navbar-dark .navbar-nav .nav-link.active,
+.navbar-dark .navbar-nav .nav-link:hover {
+    color: var(--bs-navbar-active-color, #fff); /* Use BS active color or default */
+    background-color: rgba(255, 255, 255, 0.1); /* Lighter overlay */
+}
+.navbar-brand svg {
+    vertical-align: -0.2em;
+    margin-right: 0.3rem;
+}
+.dropdown-menu {
+    font-size: 0.9rem; /* Slightly smaller dropdown items */
+    /* Frosted Glass for Dropdowns */
+    background-color: var(--frost-bg);
+    -webkit-backdrop-filter: blur(var(--frost-blur-amount));
+    backdrop-filter: blur(var(--frost-blur-amount));
+    border: 1px solid var(--frost-border);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1); /* Enhance shadow */
+    border-radius: var(--bs-border-radius-lg); /* Match BS larger radius */
+}
+.dropdown-item:hover, .dropdown-item:focus {
+    /* Adjust hover/focus for better visibility on frosted bg */
+    background-color: rgba(0, 0, 0, 0.08); /* Or use a variable */
+    color: var(--bs-dropdown-link-hover-color);
+}
+/* --- Footer (Frosted Glass) --- */
+footer.fixed-bottom {
+    background-color: var(--frost-bg);
+    -webkit-backdrop-filter: blur(var(--frost-blur-amount));
+    backdrop-filter: blur(var(--frost-blur-amount));
+    border-top: 1px solid var(--frost-border);
+    box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.06);
+    padding-top: 0.8rem;
+    padding-bottom: 0.8rem;
+    font-size: 0.85rem;
+    z-index: 1020;
+    color: var(--bs-secondary-color); /* Use BS variable for footer text */
+}
+
+/* --- Alerts (Flash Messages - Subtle Frosted) --- */
+.flash-messages-container {
+    position: sticky;
+    top: 70px; /* Match body padding-top */
+    z-index: 1050; /* Ensure above most content */
+    margin-bottom: 1.5rem;
+}
+.alert {
+    font-size: 0.9rem;
+    padding: 0.8rem 1rem;
+    /* Apply frosted effect */
+    background-color: rgba(var(--bs-alert-bg-rgb), 0.85); /* Make existing bg semi-transparent */
+    border-color: rgba(var(--bs-alert-border-rgb), 0.7); /* Adjust border opacity */
+    color: var(--bs-alert-color); /* Keep original text color */
+    -webkit-backdrop-filter: blur(calc(var(--frost-blur-amount) / 2)); /* Less blur */
+    backdrop-filter: blur(calc(var(--frost-blur-amount) / 2));
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); /* Add a bit of shadow */
+    border-radius: var(--bs-alert-border-radius, var(--bs-border-radius)); /* Use BS variable */
+}
+/* Close button adjustment if needed */
+.alert .btn-close {
+    filter: brightness(0.8); /* Slightly darken close button if contrast is low */
+}
+.alert-dismissible .btn-close {
+    padding: 1rem 1rem; /* Adjust padding if needed */
+}
+
+/* --- General UI Elements --- */
+.card {
+    border: 1px solid rgba(0, 0, 0, 0.08); /* Slightly softer border */
+    transition: box-shadow 0.3s ease, transform 0.2s ease;
+    background-color: #fff; /* Ensure cards have a solid background */
+}
+.card:hover {
+    box-shadow: 0 0.3rem 1rem rgba(0, 0, 0, 0.1);
+    /* transform: translateY(-2px); */ /* Optional subtle lift */
+}
+.btn {
+    transition: all 0.2s ease-in-out; /* Smooth transitions for all buttons */
+    font-size: 0.9rem; /* Consistent button font size */
+}
+.btn:focus {
+     box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25); /* Standard focus ring */
+}
+.btn-lg { font-size: 1.1rem; }
+.btn-sm { font-size: 0.8rem; }
+.btn svg { vertical-align: -0.15em; } /* Align icons in buttons */
+
+.form-control, .form-select {
+    font-size: 0.9rem; /* Consistent form input size */
+    background-color: #fff; /* Ensure solid background */
+    border: 1px solid #ced4da;
+}
+.form-control:focus, .form-select:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+.form-text {
+    font-size: 0.8rem; /* Smaller help text */
+}
+
+.table {
+    font-size: 0.9rem; /* Slightly smaller table font */
+    background-color: #fff; /* Ensure table has background if needed */
+    border-color: #dee2e6;
+}
+.table th {
+    font-weight: 600; /* Bolder table headers */
+    white-space: nowrap; /* Prevent headers wrapping */
+    background-color: #f8f9fa; /* Light header background */
+}
+.table td { vertical-align: middle; }
+.table-hover tbody tr:hover { background-color: rgba(0, 0, 0, 0.04); }
+
+.badge {
+    padding: 0.4em 0.6em;
+    font-weight: 500;
+}
+
+/* --- Page Content Fade-in Animation --- */
+main.container > .page-content {
+    animation: pageFadeIn 0.4s ease-out;
+}
+@keyframes pageFadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Dashboard Specific --- */
+.dashboard-card { /* Inherits card styles, add animation trigger */
+    opacity: 0;
+    animation: fadeInUp 0.5s ease-out forwards;
+}
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+/* Staggered animation delays */
+.dashboard-card:nth-child(1) { animation-delay: 0.05s; }
+.dashboard-card:nth-child(2) { animation-delay: 0.1s; }
+.dashboard-card:nth-child(3) { animation-delay: 0.15s; }
+.dashboard-card:nth-child(4) { animation-delay: 0.2s; }
+
+.stat-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    position: relative;
+    background-color: #fff;
+}
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+.stat-card .fs-2 { margin-bottom: 0.1rem; }
+.stat-card .small { font-size: 0.8em; }
+
+.btn-dashboard {
+    padding: 0.7rem 1.2rem;
+    font-size: 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.btn-dashboard:hover { transform: scale(1.02); }
+.btn-dashboard svg { margin-right: 0.5rem; width: 1.1em; height: 1.1em; }
+
+/* --- Manage Concepts List --- */
+.concept-list tr.due-highlight td:first-child {
+     border-left: 4px solid var(--bs-warning);
+}
+.mastery-badge { font-size: 0.75em; padding: 0.3em 0.5em; color: #fff; }
+.mastery-new { background-color: var(--bs-danger) !important; }
+.mastery-learning { background-color: var(--bs-warning) !important; color: #212529 !important; }
+.mastery-young { background-color: var(--bs-success) !important; }
+.mastery-mature { background-color: var(--bs-primary) !important; }
+.mastery-unknown { background-color: var(--bs-secondary) !important; }
+
+.filter-action-buttons .btn svg { margin-right: 0; }
+.filter-action-buttons .btn .ms-1 { margin-left: 0.3rem !important; }
+
+/* Manage Concepts View Switcher */
+.view-switcher .btn { border-radius: 0; font-size: 0.85rem; padding: 0.3rem 0.6rem; }
+.view-switcher .btn:first-child { border-top-left-radius: .25rem; border-bottom-left-radius: .25rem; }
+.view-switcher .btn:last-child { border-top-right-radius: .25rem; border-bottom-right-radius: .25rem; }
+.view-switcher .btn.active { z-index: 2; }
+
+/* Collapsible Row */
+.concept-details-row > td { padding: 0 !important; border: none !important; background-color: #f8f9fa;}
+.concept-details-row .collapse-content { padding: 0.8rem 1.2rem; border-bottom: 1px solid #dee2e6; font-size: 0.85rem; }
+.expand-btn { cursor: pointer; transition: transform 0.2s ease-in-out, color 0.2s ease; color: #6c757d; padding: 0.25rem; line-height: 1; border: none; background: none; display: inline-flex; align-items: center; }
+.expand-btn:hover { color: #0d6efd; }
+.expand-btn.collapsed .bi-chevron-down { display: inline-block; }
+.expand-btn.collapsed .bi-chevron-up { display: none; }
+.expand-btn:not(.collapsed) .bi-chevron-down { display: none; }
+.expand-btn:not(.collapsed) .bi-chevron-up { display: inline-block; transform: rotate(180deg); }
+.expand-btn[aria-expanded="true"] { color: #0d6efd; }
+/* Details within collapse */
+.concept-details-row .definition-list dt { font-weight: bold; color: #495057; margin-right: 0.5em; }
+.concept-details-row .definition-list dd { color: #212529; margin-left: 0; margin-bottom: 0.3rem; }
+.concept-details-row h6 { font-size: 0.9em; margin-bottom: 0.3rem !important; font-weight: 600; color: #555; }
+.concept-details-row p, .concept-details-row ul, .concept-details-row dl { margin-bottom: 0.6rem !important; }
+.concept-details-row ul { padding-left: 1.2rem; list-style: disc; }
+
+/* Collocation View Source Link */
+.source-concept-link { font-size: 0.9em; color: #6c757d; text-decoration: none; }
+.source-concept-link:hover { text-decoration: underline; color: #0d6efd; }
+
+/* --- Add/Edit Concept Form --- */
+#detailsAccordion .accordion-button { font-weight: 500; font-size: 0.95rem; }
+#detailsAccordion .accordion-button:not(.collapsed) { color: var(--bs-primary); background-color: var(--bs-primary-bg-subtle); }
+#detailsAccordion .accordion-body { padding: 1rem 1.2rem; }
+.meaning-group, .collocation-group { background-color: #f8f9fa; }
+.remove-item-btn { font-size: 1.2rem; line-height: 1; padding: 0.1rem 0.4rem; }
+/* Add/Remove Animation Classes */
+.form-item-enter { opacity: 0; transform: scale(0.95); transition: opacity 0.3s ease, transform 0.3s ease; }
+.form-item-enter-active { opacity: 1; transform: scale(1); }
+.form-item-leave-active { opacity: 0; transition: opacity 0.2s ease; }
+
+/* --- Practice/Test Sessions --- */
+.practice-card, .test-card { min-height: 380px; background-color: #fff; }
+.answer-section { opacity: 0; max-height: 0; overflow: hidden; transition: opacity 0.4s ease, max-height 0.4s ease, margin-top 0.4s ease, padding-top 0.4s ease; margin-top: 0; padding-top: 0; border-top: 1px solid transparent; }
+.answer-section.visible { opacity: 1; max-height: 2000px; margin-top: 1.5rem; padding-top: 1.5rem; border-top-color: #eee; }
+/* Session Controls (Quit Button) */
+.session-controls { position: absolute; top: 1rem; right: 1rem; z-index: 10; }
+/* Practice Button Specifics */
+.quality-buttons .btn { margin: 0.3rem 0.4rem; min-width: 80px; }
+.btn-quality-again { background-color: #dc3545; border-color: #dc3545; color: white; }
+.btn-quality-hard { background-color: #ffc107; border-color: #ffc107; color: #343a40; }
+.btn-quality-good { background-color: #198754; border-color: #198754; color: white; }
+.btn-quality-easy { background-color: #0dcaf0; border-color: #0dcaf0; color: #343a40; }
+.btn-play-audio { font-size: 0.8em; padding: 0.2rem 0.4rem; vertical-align: middle; }
+.btn-edit-concept { font-size: 0.8em; padding: 0.1rem 0.4rem; vertical-align: middle; }
+#showAnswerBtn { transition: opacity 0.3s ease, visibility 0.3s ease; }
+#showAnswerBtn.hidden { opacity: 0; visibility: hidden; }
+/* Test Session Specifics */
+.blank-placeholder { font-weight: bold; color: #0d6efd; background-color: #e7f1ff; padding: 0 0.3em; border-radius: 0.2em; border-bottom: 1px dotted #0d6efd; }
+.correct-blank-answer { background-color: #d1e7dd; color: #0f5132; padding: 0.1em 0.4em; border-radius: 0.25rem; font-weight: bold; border: 1px solid #a3cfbb; font-family: monospace; }
+.question-area { min-height: 180px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.hint-section { display: none; }
+.hint-section.visible { display: block; animation: fadeInHint 0.5s ease; }
+@keyframes fadeInHint { from { opacity: 0; } to { opacity: 1; } }
+.original-phrase-hint { font-style: italic; color: #6c757d; }
+
+/* Mode 3 List Recall Styles - REVISED */
+.list-recall-table td {
+    vertical-align: top;
+    padding-top: 0.8rem;
+    padding-bottom: 0.8rem;
+}
+.list-recall-table .prompt-column {
+    font-size: 0.95em;
+    padding-left: 0.8rem;
+}
+.list-recall-table .prompt-column .term { font-weight: bold; font-size: 1.1em; }
+.list-recall-table .prompt-column .phonetic { color: #6c757d; font-size: 0.9em; }
+.list-recall-table .prompt-column ul { margin-bottom: 0 !important; padding-left: 0; list-style: none;}
+.list-recall-table .prompt-column li { margin-bottom: 0.2rem; }
+
+.list-recall-table .blank-area {
+    min-height: 60px;
+    border-bottom: 1px dashed #adb5bd;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 0.4rem 0.6rem;
+}
+.list-recall-table .blank-area:hover {
+     background-color: rgba(0, 0, 0, 0.05);
+}
+/* Placeholder text before revealing */
+.list-recall-table .reveal-placeholder {
+     color: #6c757d;
+     font-style: italic;
+     font-size: 0.9em;
+}
+/* Answer content */
+.list-recall-table .answer-content {
+    display: none; /* Hidden by default */
+    font-size: 0.9em;
+    color: #0d6efd;
+    margin-top: 4px;
+    text-align: left;
+    width: 100%;
+}
+.list-recall-table .blank-area.revealed {
+    cursor: default;
+    border-bottom-style: solid;
+    justify-content: flex-start;
+    align-items: flex-start;
+    text-align: left;
+}
+.list-recall-table .blank-area.revealed .reveal-placeholder { display: none; }
+.list-recall-table .blank-area.revealed .answer-content { display: block; }
+.list-recall-table .answer-content .term { font-weight: bold; font-size: 1.1em; }
+.list-recall-table .answer-content .phonetic { color: #6c757d; font-size: 0.9em; }
+.list-recall-table .answer-content ul { margin-bottom: 0 !important; padding-left: 0; list-style: none; }
+.list-recall-table .answer-content li { margin-bottom: 0.2rem; }
+
+/* Ensure row background covers the blank area cell */
+.list-recall-table tr.table-success td,
+.list-recall-table tr.table-danger td {
+     background-color: inherit !important;
+}
+.list-recall-table tr.table-success td.blank-area:hover,
+.list-recall-table tr.table-danger td.blank-area:hover {
+     background-color: rgba(0, 0, 0, 0.07) !important;
+}
+
+
+.list-recall-table .correct-indicator, .list-recall-table .incorrect-indicator {
+    font-size: 1.3em;
+    margin-left: 8px;
+    vertical-align: middle;
+    font-weight: bold;}
+.judgment-buttons-list .btn { padding: 0.2rem 0.5rem; }
+.judgment-buttons-list svg { width: 1em; height: 1em; }
+
+/* Definition/Collocation lists within cards */
+.definition-list dt { font-weight: bold; color: var(--bs-primary); margin-right: 0.3em;}
+.definition-list dd { margin-left: 0; margin-bottom: 0.5rem; }
+.collocation-item { margin-bottom: 0.75rem; padding-left: 1rem; border-left: 3px solid #adb5bd; }
+.collocation-item strong { display: block; margin-bottom: 0.2rem; }
+.collocation-item .example { font-style: italic; color: #6c757d; font-size: 0.9em; }
+
+/* History Page */
+.history-table td { font-size: 0.85rem; }
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 767.98px) {
+    .filter-action-buttons { justify-content: space-between !important; width: 100%; margin-top: 0.5rem; }
+    .filter-action-buttons .btn { flex-grow: 0 !important; }
+    .filter-action-buttons .btn-outline-secondary { padding-left: 0.5rem; padding-right: 0.5rem; }
+
+    .view-switcher { margin-bottom: 0.5rem; }
+
+    .table thead:not(.list-recall-table thead) { display: none; }
+    .table tbody tr:not(.list-recall-table tr) { display: block; margin-bottom: 1rem; border: 1px solid #dee2e6; border-radius: .25rem; background-color: #fff; }
+    .table tbody td:not(.list-recall-table td) { display: block; text-align: right; padding-left: 50%; position: relative; border: none; border-bottom: 1px solid #eee; }
+    .table tbody td:not(.list-recall-table td)::before { content: attr(data-label); position: absolute; left: 10px; width: calc(50% - 20px); text-align: left; font-weight: bold; white-space: nowrap; }
+    .table tbody td:not(.list-recall-table td):last-child { border-bottom: none; }
+
+    .concept-list tr.due-highlight { border-left: none; border-top: 4px solid var(--bs-warning); }
+    .expand-btn { position: absolute; top: 5px; left: 5px; }
+    .concept-details-row { display: block; width: 100%; }
+    .concept-details-row > td { display: block; }
+    .concept-details-row .collapse-content { border-bottom: none; }
+
+    /* Adjust dashboard cards layout */
+    .stat-card .fs-2 { font-size: 1.5rem; }
+    .btn-dashboard { font-size: 0.9rem; padding: 0.6rem 1rem; }
+
+    /* Adjust Practice/Test buttons */
+    .quality-buttons .btn, .judgment-buttons .btn { font-size: 0.9rem; min-width: 65px; padding: 0.5rem 0.6rem; }
+    .quality-buttons .d-none.d-sm-inline, .judgment-buttons .d-none.d-sm-inline { display: none !important; }
+
+    /* Mode 3 list recall table adjustments */
+    .list-recall-table th { font-size: 0.8rem; padding: 0.4rem; }
+    .list-recall-table td { font-size: 0.85rem; padding: 0.5rem; }
+    .list-recall-table .prompt-column, .list-recall-table .blank-area { min-height: 50px; }
+    .judgment-buttons-list { display: flex; flex-direction: column; gap: 0.3rem; }
+    .list-recall-table th:nth-child(3), .list-recall-table td:nth-child(3) { width: auto !important; padding-right: 0.5rem; }
+}
+
+/* Tooltip Style */
+.tooltip-inner {
+    background-color: #343a40;
+    color: #f8f9fa;
+    border-radius: 0.25rem;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85em;
+    max-width: 250px;
+    text-align: center;
+}
+.tooltip.bs-tooltip-auto[data-popper-placement^=top] .tooltip-arrow::before,
+.tooltip.bs-tooltip-top .tooltip-arrow::before {
+    border-top-color: #343a40;
+}
+.tooltip.bs-tooltip-auto[data-popper-placement^=bottom] .tooltip-arrow::before,
+.tooltip.bs-tooltip-bottom .tooltip-arrow::before {
+    border-bottom-color: #343a40;
+}
+.tooltip.bs-tooltip-auto[data-popper-placement^=left] .tooltip-arrow::before,
+.tooltip.bs-tooltip-left .tooltip-arrow::before {
+    border-left-color: #343a40;
+}
+.tooltip.bs-tooltip-auto[data-popper-placement^=right] .tooltip-arrow::before,
+.tooltip.bs-tooltip-right .tooltip-arrow::before {
+    border-right-color: #343a40;
+}
+
+/* Utility: Disable pointer events */
+.disabled, :disabled {
+    pointer-events: none;
+     /* opacity: 0.65; */ /* Bootstrap handles opacity */
+}
+
+/* Stretched Link fix inside cards/stat items */
+.stat-card a:focus-visible { /* Target the link directly */
+    outline: 2px solid blue; /* Example focus style */
+    outline-offset: 2px;
+    border-radius: .25rem; /* Match card rounding */
+    display: block; /* Ensure link covers area */
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 2; /* Bring focus outline above card content */
+}

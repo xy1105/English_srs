@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block title %}页面未找到 (404){% endblock %}
+
+{% block content %}
+<div class="text-center py-5">
+    <h1 class="display-1">404</h1>
+    <h2>页面未找到</h2>
+    <p class="lead">抱歉，你访问的页面不存在。</p>
+    <a href="{{ url_for('main.index') }}" class="btn btn-primary mt-3">返回首页</a>
+</div>
+{% endblock %}

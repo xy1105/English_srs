@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if concept %}编辑{% else %}添加{% endif %}单词 - 单词记忆 SRS{% endblock %}
+
+{% block head_extra %}
+{# Styles specific to this page are now mainly in style.css #}
+{# Keep this block if you need page-specific styles not suited for global css #}
+{% endblock %}
+
+{% block content %}
+<h1>{% if concept and not is_edit_error %}<span class="text-muted">编辑:</span> {{ concept.term }}{% elif concept_data_on_error %}<span class="text-muted">编辑 (修正错误):</span> {{ concept_data_on_error.term }}{% else %}添加新单词{% endif %}</h1>
+<hr>
+
+{# Determine form action URL #}
+{% set form_action = url_for('concept.edit_concept', concept_id=concept.id) if concept and not is_edit_error else url_for('concept.add_concept') if not concept else url_for('concept.edit_concept', concept_id=concept.id) %}
+
+<form method="POST" action="{{ form_action }}" id="conceptForm">
+
+    {# --- Basic Concept Fields (from partial) --- #}
+    {# Pass concept (or error data) and all_tags to the partial #}
+    {% include 'partials/_concept_form_fields.html' %}
+
+    {# --- Dynamic Sections with Collapse --- #}
+    <div class="accordion mb-4 shadow-sm" id="detailsAccordion">
+
+      {# Etymology Section #}
+      <div class="accordion-item dynamic-section">
+        <h2 class="accordion-header" id="headingEtymology">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEtymology" aria-expanded="false" aria-controls="collapseEtymology">
+            词源/词根词缀 (Etymology) <span class="small text-muted ms-2">(可选)</span>
+          </button>
+        </h2>
+        <div id="collapseEtymology" class="accordion-collapse collapse" aria-labelledby="headingEtymology" data-bs-parent="#detailsAccordion">
+          <div class="accordion-body">
+            {% set etymology_value = concept.etymology if concept else concept_data_on_error.etymology if concept_data_on_error else '' %}
+            <textarea class="form-control" id="etymology" name="etymology" rows="3" placeholder="例如：auto- (self) + bio- (life) + graphy (writing)">{{ etymology_value }}</textarea>
+          </div>
+        </div>
+      </div>
+
+      {# Meanings Section #}
+      <div class="accordion-item dynamic-section">
+        <h2 class="accordion-header" id="headingMeanings">
+           {# Set initial count based on data passed #}
+           {% set initial_meaning_count = (concept.meanings if concept and not is_edit_error else concept_data_on_error.meanings_on_error if concept_data_on_error else [])|length %}
+           {% if initial_meaning_count == 0 and not concept and not concept_data_on_error %} {# Default to 1 for add page #}
+                {% set initial_meaning_count = 1 %}
+           {% endif %}
+          <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMeanings" aria-expanded="true" aria-controls="collapseMeanings">
+            含义 (Meanings) <span class="badge bg-secondary ms-2" id="meaningsCountBadge">{{ initial_meaning_count }}</span>
+          </button>
+        </h2>
+        <div id="collapseMeanings" class="accordion-collapse collapse show" aria-labelledby="headingMeanings" data-bs-parent="#detailsAccordion">
+          <div class="accordion-body">
+            <div id="meaningsContainer">
+              {# Meanings loop (from partial) - Render existing/error fields #}
+              {# Partials inherit context by default, no need for 'with' here for the main rendering part #}
+              {% include 'partials/_meaning_fields.html' %}
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-success mt-2" id="addMeaningBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle me-1" viewBox="0 0 16 16"> <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/> <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/> </svg>
+                添加含义
+            </button>
+            <p class="form-text small mt-1">每个含义的“词性”和“定义”都需要填写。</p>
+          </div>
+        </div>
+      </div>
+
+      {# Collocations Section #}
+      <div class="accordion-item dynamic-section">
+        <h2 class="accordion-header" id="headingCollocations">
+           {# Set initial count based on data passed #}
+           {% set initial_collocation_count = (concept.collocations if concept and not is_edit_error else concept_data_on_error.collocations_on_error if concept_data_on_error else [])|length %}
+            {% if initial_collocation_count == 0 and not concept and not concept_data_on_error %} {# Default to 1 for add page #}
+                 {% set initial_collocation_count = 1 %}
+            {% endif %}
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCollocations" aria-expanded="false" aria-controls="collapseCollocations">
+            固定搭配/例句 (Collocations) <span class="badge bg-secondary ms-2" id="collocationsCountBadge">{{ initial_collocation_count }}</span>
+             <span class="small text-muted ms-2">(可选)</span>
+          </button>
+        </h2>
+        <div id="collapseCollocations" class="accordion-collapse collapse" aria-labelledby="headingCollocations" data-bs-parent="#detailsAccordion">
+          <div class="accordion-body">
+             <div id="collocationsContainer">
+                {# Collocations loop (from partial) - Render existing/error fields #}
+                {% include 'partials/_collocation_fields.html' %}
+             </div>
+             <button type="button" class="btn btn-sm btn-outline-success mt-2" id="addCollocationBtn">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle me-1" viewBox="0 0 16 16"> <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/> <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/> </svg>
+                 添加搭配
+             </button>
+             <p class="form-text small mt-1">每个搭配的“搭配/短语”必须填写，“例句”可选。</p>
+          </div>
+        </div>
+      </div>
+
+    </div>{# End Accordion #}
+
+    <hr>
+
+    {# --- Form Actions --- #}
+    <div class="d-flex justify-content-end align-items-center gap-2">
+        {# Determine cancel URL: Go back to manage list, preserving filters if editing #}
+        {% set origin_view_val = concept.origin_view if concept and concept.origin_view is defined else 'concepts' %}
+        {% set origin_page_val = concept.origin_page if concept and concept.origin_page is defined else 1 %}
+        {% set origin_search_val = concept.origin_search if concept and concept.origin_search is defined else '' %}
+        {% set origin_tag_val = concept.origin_tag if concept and concept.origin_tag is defined else '' %}
+        {% set origin_pos_val = concept.origin_pos if concept and concept.origin_pos is defined else '' %}
+        {% set cancel_url = url_for('concept.manage_concepts',
+                                    view=origin_view_val, page=origin_page_val,
+                                    q=origin_search_val, tag=origin_tag_val, pos=origin_pos_val) %}
+        <a href="{{ cancel_url }}" class="btn btn-secondary">取消</a>
+        <button type="submit" class="btn btn-primary">
+            {% if concept and not is_edit_error %} {# Editing existing concept #}
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-lg me-1" viewBox="0 0 16 16"> <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022Z"/> </svg>
+            保存更改
+            {% elif is_edit_error %} {# Submitting correction after edit error #}
+             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-lg me-1" viewBox="0 0 16 16"> <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022Z"/> </svg>
+             保存更改
+            {% else %} {# Adding new concept #}
+             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-lg me-1" viewBox="0 0 16 16"> <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2Z"/> </svg>
+             添加单词
+            {% endif %}
+        </button>
+    </div>
+
+</form>
+
+{# Templates for dynamic fields (hidden) - used by concept_form.js #}
+{# CORRECTED: Remove the invalid 'with context={...}' syntax #}
+<div class="d-none">
+    {% include 'partials/_meaning_fields.html' %}
+    {% include 'partials/_collocation_fields.html' %}
+</div>
+
+{% endblock %}
+
+{% block scripts_extra %}
+{# Include the specific JS file for this page's interactions #}
+<script src="{{ url_for('static', filename='js/concept_form.js') }}"></script>
+{% endblock %}

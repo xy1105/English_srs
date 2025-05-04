@@ -1,0 +1,65 @@
+{# partials/_concept_form_fields.html #}
+{# Contains core fields directly related to the 'concepts' table #}
+{# Expects 'concept' (optional, for edit/error) or 'concept_data_on_error' (optional) #}
+{# Expects 'all_tags' (list of tag dicts) #}
+
+{# --- Hidden fields for edit context (passed via concept dict) --- #}
+{% if concept and concept.origin_page is defined %} {# Check if origin data exists #}
+<input type="hidden" name="origin_view" value="{{ concept.origin_view | default('concepts') }}">
+<input type="hidden" name="origin_page" value="{{ concept.origin_page | default(1) }}">
+<input type="hidden" name="origin_search" value="{{ concept.origin_search | default('') }}">
+<input type="hidden" name="origin_tag" value="{{ concept.origin_tag | default('') }}">
+<input type="hidden" name="origin_pos" value="{{ concept.origin_pos | default('') }}">
+{% endif %}
+
+{# --- Term (Required) --- #}
+<div class="mb-3">
+    <label for="term" class="form-label">核心概念 (Term) <span class="text-danger">*</span></label>
+    {# Determine value: concept data -> error data -> empty #}
+    {% set term_value = concept.term if concept else concept_data_on_error.term if concept_data_on_error else '' %}
+    <input type="text" class="form-control form-control-lg" id="term" name="term" value="{{ term_value }}" required autofocus> {# Larger input, autofocus #}
+    <div class="form-text">单词本身、短语核心等。必须填写且保持唯一。</div>
+     <div class="invalid-feedback">核心概念不能为空。</div>
+</div>
+
+{# --- Phonetic & Audio URL --- #}
+<div class="row g-3 mb-3">
+    <div class="col-md-6">
+        <label for="phonetic" class="form-label">音标 (Phonetic)</label>
+         {% set phonetic_value = concept.phonetic if concept else concept_data_on_error.phonetic if concept_data_on_error else '' %}
+        <input type="text" class="form-control" id="phonetic" name="phonetic" value="{{ phonetic_value }}" placeholder="例如 /fəˈnetɪk/">
+    </div>
+    <div class="col-md-6">
+        <label for="audio_url" class="form-label">发音链接 (Audio URL)</label>
+         {% set audio_url_value = concept.audio_url if concept else concept_data_on_error.audio_url if concept_data_on_error else '' %}
+        <input type="url" class="form-control" id="audio_url" name="audio_url" value="{{ audio_url_value }}" placeholder="例如 https://dict.youdao.com/dictvoice?audio=...">
+         <div class="form-text">指向 .mp3 或其他在线音频文件的网址。</div>
+    </div>
+</div>
+
+{# --- Synonyms --- #}
+<div class="mb-3">
+    <label for="synonyms" class="form-label">同义/近义词 (Synonyms)</label>
+     {% set synonyms_value = concept.synonyms if concept else concept_data_on_error.synonyms if concept_data_on_error else '' %}
+    <input type="text" class="form-control" id="synonyms" name="synonyms" value="{{ synonyms_value }}" placeholder="用英文逗号分隔, 例如 similar, alike, related">
+</div>
+
+{# --- Tags --- #}
+<div class="mb-3">
+    <label for="tags" class="form-label">标签 (Tags)</label>
+    {# Determine value: concept data -> error data -> empty #}
+    {% set tags_value = concept.tags_str if concept else concept_data_on_error.tags_str if concept_data_on_error else '' %}
+    {# Use datalist for suggestions #}
+    <input type="text" class="form-control" id="tags" name="tags" value="{{ tags_value }}" placeholder="用英文逗号分隔, 例如 必修一Unit1, 阅读词汇" list="tagSuggestions">
+    <div class="form-text">为单词分类，方便筛选和管理。输入时会根据已有标签提供建议。</div>
+
+    {# Datalist element for tag suggestions #}
+    <datalist id="tagSuggestions">
+        {# Ensure all_tags is available in the context #}
+        {% if all_tags %}
+            {% for tag in all_tags %}
+            <option value="{{ tag.name }}">
+            {% endfor %}
+        {% endif %}
+    </datalist>
+</div>

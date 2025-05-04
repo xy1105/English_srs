@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+
+{% block title %}导入 CSV - 单词记忆 SRS{% endblock %}
+
+{% block content %}
+<h1>从 CSV 文件导入单词</h1>
+<hr>
+
+<p>请上传符合以下格式的 CSV 文件。系统将尝试导入新单词，并自动跳过已存在的单词（基于 'term' 列）。</p>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <strong>CSV 文件格式要求</strong>
+    </div>
+    <div class="card-body">
+        <p>CSV 文件必须包含的第一行是**列标题 (Header)**。推荐包含以下列：</p>
+        <table class="table table-sm table-bordered small">
+            <thead>
+                <tr>
+                    <th>列标题 (Header)</th>
+                    <th>说明</th>
+                    <th>是否必需</th>
+                    <th>示例值</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>term</code></td>
+                    <td>单词或核心概念本身</td>
+                    <td><span class="badge bg-danger">必需</span></td>
+                    <td><code>abandon</code></td>
+                </tr>
+                <tr>
+                    <td><code>phonetic</code></td>
+                    <td>音标 (IPA)</td>
+                    <td>可选</td>
+                    <td><code>/əˈbændən/</code></td>
+                </tr>
+                 <tr>
+                    <td><code>tags</code></td>
+                    <td>标签 (多个标签用英文逗号 <code>,</code> 分隔)</td>
+                    <td>可选</td>
+                    <td><code>必修一Unit1, 动词</code></td>
+                </tr>
+                 <tr>
+                    <td><code>etymology</code></td>
+                    <td>词源信息</td>
+                    <td>可选</td>
+                    <td><code>(来自拉丁语...)</code></td>
+                </tr>
+                <tr>
+                    <td><code>synonyms</code></td>
+                    <td>同义/近义词 (多个用英文逗号 <code>,</code> 分隔)</td>
+                    <td>可选</td>
+                    <td><code>give up, desert</code></td>
+                </tr>
+                <tr>
+                    <td><code>audio_url</code></td>
+                    <td>发音文件的 URL 链接</td>
+                    <td>可选</td>
+                    <td><code>https://dict.youdao.com/dictvoice?audio=abandon</code></td>
+                </tr>
+                <tr>
+                    <td><code>part_of_speech_1</code></td>
+                    <td>第一个含义的词性</td>
+                    <td>可选 (但与 <code>definition_1</code> 同时提供)</td>
+                    <td><code>vt.</code></td>
+                </tr>
+                 <tr>
+                    <td><code>definition_1</code></td>
+                    <td>第一个含义的释义</td>
+                    <td>可选 (但与 <code>part_of_speech_1</code> 同时提供)</td>
+                    <td><code>抛弃；放弃</code></td>
+                </tr>
+                 <tr>
+                    <td><code>phrase_1</code></td>
+                    <td>第一个固定搭配/短语</td>
+                    <td>可选</td>
+                    <td><code>abandon oneself to</code></td>
+                </tr>
+                 <tr>
+                    <td><code>example_1</code></td>
+                    <td>第一个搭配的例句或说明</td>
+                    <td>可选</td>
+                    <td><code>He abandoned himself to despair.</code></td>
+                </tr>
+                 <tr>
+                    <td><code>part_of_speech_2</code></td>
+                    <td>第二个含义的词性</td>
+                    <td>可选</td>
+                    <td><code>n.</code></td>
+                </tr>
+                 <tr>
+                    <td><code>definition_2</code></td>
+                    <td>第二个含义的释义</td>
+                    <td>可选</td>
+                    <td><code>放纵</code></td>
+                </tr>
+                 <tr>
+                    <td><code>phrase_2</code></td>
+                    <td>第二个固定搭配/短语</td>
+                    <td>可选</td>
+                    <td><code>with abandon</code></td>
+                </tr>
+                <tr>
+                    <td><code>example_2</code></td>
+                    <td>第二个搭配的例句</td>
+                    <td>可选</td>
+                    <td><code>They danced with abandon.</code></td>
+                </tr>
+                <tr>
+                    <td><code>..._3</code>, <code>..._4</code>, etc.</td>
+                    <td>更多含义和搭配，以此类推...</td>
+                    <td>可选</td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h5 class="mt-3">重要说明:</h5>
+        <ul>
+            <li>第一行**必须**是列标题。上面列出的标题是推荐的，但**只有 <code>term</code> 是必需的**。</li>
+            <li>文件编码**必须**是 <strong>UTF-8</strong> (或者尝试 GBK，如果 UTF-8 失败)。用 Excel 保存时，请选择 "CSV UTF-8 (逗号分隔)" 格式。</li>
+            <li>包含多个含义或搭配时，请使用 <code>part_of_speech_1</code>, <code>definition_1</code>, <code>phrase_1</code>, <code>example_1</code>, <code>part_of_speech_2</code>, <code>definition_2</code> ... 这样的**数字后缀**来命名列。系统会按数字顺序读取。</li>
+            <li>标签 (tags) 和同义词 (synonyms) 列中的多个值请使用**英文逗号 (<code>,</code>)** 分隔。</li>
+            <li>如果某个单词已存在于数据库中（根据 <code>term</code> 判断），该行将被跳过，不会更新现有单词。</li>
+        </ul>
+
+        <h5 class="mt-3">CSV 文件内容示例:</h5>
+        <pre class="bg-light p-2 border rounded small"><code>term,phonetic,tags,part_of_speech_1,definition_1,phrase_1,example_1
+apple,/ˈæpəl/,水果,n.,苹果,apple pie,I like apple pie.
+go,/ɡoʊ/,基础动词;必修一Unit1,vi.,去；走,go ahead,Go ahead with your plan.
+go,/ɡoʊ/,"",n.,尝试,"give it a go","Why not give it a go?"
+</code></pre>
+        <p class="small text-muted">注意：上面的示例为了简洁省略了部分列。第二行和第三行的 `term` 相同，但由于导入逻辑是跳过已存在的，所以只有第一行（或者文件中先出现的那个 `go`）会被导入。</p>
+
+    </div>
+</div>
+
+
+<form method="POST" enctype="multipart/form-data" action="{{ url_for('concept.import_csv') }}">
+    <div class="mb-3">
+        <label for="csvfile" class="form-label">选择要上传的 CSV 文件</label>
+        <input class="form-control" type="file" id="csvfile" name="csvfile" accept=".csv" required>
+    </div>
+    <div class="d-flex justify-content-end">
+         <a href="{{ url_for('concept.manage_concepts') }}" class="btn btn-secondary me-2">取消</a>
+         <button type="submit" class="btn btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload me-1" viewBox="0 0 16 16"> <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/> <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/> </svg>
+            开始导入
+        </button>
+    </div>
+</form>
+
+{% endblock %}

@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+
+{% block title %}随机测试设置 - 单词记忆 SRS{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+<div class="col-lg-8 col-md-10">
+
+<h1>随机测试设置</h1>
+<p class="lead text-muted mb-4">选择你的测试方式和范围，快速检验学习成果！</p>
+
+{% if total_concepts > 0 %}
+<form method="POST" action="{{ url_for('test.setup') }}" class="needs-validation" novalidate>
+    {# 1. Test Quantity #}
+    <div class="mb-4 p-3 border rounded bg-light shadow-sm">
+        <label for="quantity" class="form-label fw-bold fs-5">1. 测试数量</label>
+        <input type="number" class="form-control form-control-lg" id="quantity" name="quantity" min="1" value="10" required>
+        <div class="form-text mt-2">你想一次测试多少个单词？(当前过滤条件下共 <span id="filteredConceptCount" class="fw-bold">{{ total_concepts }}</span> 个)</div>
+         <div class="invalid-feedback">请输入有效的测试数量 (大于0)。</div>
+    </div>
+
+    {# 2. Test Scope (Filter by Tag) #}
+    <div class="mb-4 p-3 border rounded bg-light shadow-sm">
+        <label for="tag_filter" class="form-label fw-bold fs-5">2. 测试范围 (按标签)</label>
+        <select class="form-select form-select-lg" id="tag_filter" name="tag_filter">
+            <option value="" selected data-count="{{ total_concepts }}">所有单词 ({{ total_concepts }})</option>
+            {% if all_tags %}
+                {% for tag in all_tags %}
+                {# The JS will fetch counts via API #}
+                <option value="{{ tag.id }}">{{ tag.name }}</option>
+                {% endfor %}
+            {% else %}
+             <option value="" disabled>没有可用的标签</option>
+            {% endif %}
+        </select>
+        <div class="form-text mt-2">选择一个标签，将只测试该标签下的单词。(选择后数量会自动更新)</div>
+        <div id="tag-count-loading" class="small text-muted mt-1" style="display: none;">正在加载标签数量...</div>
+    </div>
+
+    {# 3. Test Mode Selection #}
+    <div class="mb-4 p-3 border rounded bg-light shadow-sm">
+        <label class="form-label fw-bold fs-5 mb-3">3. 选择测试模式</label>
+        {# Mode 1 Radio #}
+        <div class="form-check mb-3">
+            <input class="form-check-input" type="radio" name="test_mode_main" id="mode1" value="1" checked>
+            <label class="form-check-label" for="mode1">
+                <strong>模式一：看词回忆</strong>
+                <span class="d-block text-muted small">显示单词，回忆后查看答案，自我判断对错。</span>
+            </label>
+        </div>
+        {# Mode 2 Radio #}
+        <div class="form-check mb-3">
+            <input class="form-check-input" type="radio" name="test_mode_main" id="mode2" value="2">
+            <label class="form-check-label" for="mode2">
+                <strong>模式二：互动问答</strong>
+                 <span class="d-block text-muted small">显示词义让你填单词，或显示搭配让你填空，自行判断对错。</span>
+            </label>
+            {# Mode 2 Sub-Options - Initially hidden, controlled by JS #}
+            <div id="mode2_sub_options" class="ms-4 mt-2 p-3 border rounded bg-white shadow-sm" style="display: none;">
+                <label class="form-label small mb-2 fw-semibold text-primary">模式二具体测试内容:</label>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="test_mode_sub_2" id="sub_meaning" value="meaning" checked disabled>
+                    <label class="form-check-label small" for="sub_meaning">单词释义 (看词写义)</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="test_mode_sub_2" id="sub_phrase" value="phrase" disabled>
+                    <label class="form-check-label small" for="sub_phrase">固定搭配 (看提示填词)</label>
+                </div>
+                 <div class="form-check">
+                    <input class="form-check-input" type="radio" name="test_mode_sub_2" id="sub_mixed" value="mixed" disabled>
+                    <label class="form-check-label small" for="sub_mixed">混合模式 (随机考查以上两种)</label>
+                </div>
+            </div>
+        </div>
+        {# Mode 3 Radio (NEW) #}
+         <div class="form-check">
+            <input class="form-check-input" type="radio" name="test_mode_main" id="mode3" value="3">
+            <label class="form-check-label" for="mode3">
+                <strong>模式三：列表回忆 (新)</strong>
+                 <span class="d-block text-muted small">以列表形式展示单词，随机挖空英文或中文，点击显示答案并标记对错。</span>
+            </label>
+            {# Mode 3 Sub-Options #}
+            <div id="mode3_sub_options" class="ms-4 mt-2 p-3 border rounded bg-white shadow-sm" style="display: none;">
+                <label class="form-label small mb-2 fw-semibold text-primary">模式三挖空类型:</label>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="test_mode_sub_3" id="sub_blank_term" value="blank_term" checked disabled>
+                    <label class="form-check-label small" for="sub_blank_term">挖空英文 (显示中文释义)</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="test_mode_sub_3" id="sub_blank_definition" value="blank_definition" disabled>
+                    <label class="form-check-label small" for="sub_blank_definition">挖空中文 (显示英文单词)</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# --- Action Buttons --- #}
+    <div class="d-flex justify-content-center mt-4 gap-3">
+         <a href="{{ url_for('main.index') }}" class="btn btn-secondary btn-lg">
+             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left-short" viewBox="0 0 16 16"> <path fill-rule="evenodd" d="M12 8a.5.5 0 0 1-.5.5H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H11.5a.5.5 0 0 1 .5.5"/> </svg>
+             返回
+         </a>
+         <button type="submit" class="btn btn-primary btn-lg">
+             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-play-fill me-1" viewBox="0 0 16 16"> <path d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393"/> </svg>
+             开始测试
+         </button>
+    </div>
+</form>
+{% else %} {# No concepts exist in the database #}
+<div class="alert alert-warning text-center" role="alert">
+  <h4 class="alert-heading">词库空空如也！</h4>
+  <p>你的词库里还没有单词，无法进行测试。</p>
+  <hr>
+  <p class="mb-0">请先 <a href="{{ url_for('concept.add_concept') }}" class="alert-link">添加一些单词</a> 或 <a href="{{ url_for('concept.import_csv') }}" class="alert-link">导入单词</a> 再来测试吧！</p>
+</div>
+ <div class="mt-4 text-center">
+     <a href="{{ url_for('main.index') }}" class="btn btn-secondary">返回仪表盘</a>
+ </div>
+{% endif %}
+
+</div> {# End Col #}
+</div> {# End Row #}
+{% endblock %}
+
+{% block scripts_extra %}
+{# Include the specific JS file for test interactions #}
+<script src="{{ url_for('static', filename='js/test.js') }}"></script>
+{# Add basic Bootstrap form validation script if desired #}
+<script>
+// Example starter JavaScript for disabling form submissions if there are invalid fields
+(function () {
+  'use strict'
+  var forms = document.querySelectorAll('.needs-validation')
+  Array.prototype.slice.call(forms)
+    .forEach(function (form) {
+      form.addEventListener('submit', function (event) {
+        if (!form.checkValidity()) {
+          event.preventDefault()
+          event.stopPropagation()
+        }
+        form.classList.add('was-validated')
+      }, false)
+    })
+})()
+</script>
+{% endblock %}

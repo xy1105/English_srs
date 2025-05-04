@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}单词记忆 SRS{% endblock %}</title>
+    <!-- Bootstrap CSS -->
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='css/style.css') }}?v=1.3" rel="stylesheet"> {# Cache busting version #}
+    {% block head_extra %}{% endblock %} {# For page-specific CSS or meta tags #}
+</head>
+<body>
+    {# --- Sticky Navbar --- #}
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4 sticky-top shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('main.index') }}">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-brain me-2" viewBox="0 0 16 16"> <path d="M9.5 11.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m-1.5-4a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 1 0v-1a.5.5 0 0 0-.5-.5m2.5-2a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 1 0v-1a.5.5 0 0 0-.5-.5m-5 0a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 1 0v-1a.5.5 0 0 0-.5-.5m2.5 6.5A.5.5 0 0 0 8 12.5v1a.5.5 0 0 0 1 0v-1a.5.5 0 0 0-.5-.5m-2.5 1a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 1 0v-1a.5.5 0 0 0-.5-.5m5 0a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 1 0v-1a.5.5 0 0 0-.5-.5M13.5 4.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 1 0v-1a.5.5 0 0 0-.5-.5M2.5 4.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 1 0v-1a.5.5 0 0 0-.5-.5M8 1a.5.5 0 0 0 0 1A1.5 1.5 0 0 1 9.5 3.5V4a.5.5 0 0 0 1 0V3.5A2.5 2.5 0 0 0 8 1zm-1.5 3.5a.5.5 0 0 0 1 0V3.5A1.5 1.5 0 0 1 8 2a.5.5 0 0 0 0-1 2.5 2.5 0 0 0-2.5 2.5z"/> <path d="M14.767 6.135A5.5 5.5 0 0 0 8 4.5a5.5 5.5 0 0 0-6.767 1.635C.92 7.18 0 8.73 0 10.5 0 12.276.733 13.78 1.703 14.71C2.743 15.7 4.266 16 6 16h.5a.5.5 0 0 0 .5-.5v-.652A2.5 2.5 0 0 1 8 12.5a2.5 2.5 0 0 1 1-1.973V10.5a.5.5 0 0 0 1 0v.652A2.5 2.5 0 0 1 11 13.5v.652a.5.5 0 0 0 .5.5H12c1.734 0 3.257-.3 4.297-1.29.97-.93 1.703-2.434 1.703-4.21 0-1.77-.92-3.32-2.233-4.365M1.849 9.875A4.5 4.5 0 0 1 8 6.5a4.5 4.5 0 0 1 6.151 3.375A3.5 3.5 0 0 1 15 10.5c0 1.388-.56 2.622-1.41 3.477-.793.795-1.978 1.023-3.424 1.023H11v-.652A1.5 1.5 0 0 0 9.5 13v-.652A1.5 1.5 0 0 0 8 10.88a1.5 1.5 0 0 0-1.5 1.968V13a1.5 1.5 0 0 0-1.5 1.5v.652H6c-1.446 0-2.631-.228-3.424-1.023C1.71 13.122 1.15 11.888 1.15 10.5c0-1.03.294-1.927.699-2.625"/> </svg>
+                <span>单词 SRS</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    {# Dashboard Link #}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'main.index' %}active{% endif %}" aria-current="page" href="{{ url_for('main.index') }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-house-door-fill" viewBox="0 0 16 16"> <path d="M6.5 14.5v-3.505c0-.245.25-.495.5-.495h2c.25 0 .5.25.5.5v3.5a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5z"/> </svg>
+                            仪表盘
+                        </a>
+                    </li>
+                    {# Concepts Dropdown #}
+                     <li class="nav-item dropdown">
+                      <a class="nav-link dropdown-toggle {% if request.endpoint and request.endpoint.startswith('concept.') %}active{% endif %}" href="#" id="navbarDropdownConcepts" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-card-list" viewBox="0 0 16 16"> <path d="M14.5 3a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h13zm-13-1A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13z"/> <path d="M5 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 5 8zm0-2.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm0 5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm-1-5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0zM4 8a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0zm0 2.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0z"/> </svg>
+                        单词管理
+                      </a>
+                      <ul class="dropdown-menu" aria-labelledby="navbarDropdownConcepts">
+                        <li><a class="dropdown-item {% if request.endpoint == 'concept.manage_concepts' %}active{% endif %}" href="{{ url_for('concept.manage_concepts') }}">查看列表</a></li>
+                        <li><a class="dropdown-item {% if request.endpoint == 'concept.add_concept' %}active{% endif %}" href="{{ url_for('concept.add_concept') }}">添加新词</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item {% if request.endpoint == 'concept.import_csv' %}active{% endif %}" href="{{ url_for('concept.import_csv') }}">导入 CSV</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('concept.export_csv') }}">导出 CSV</a></li>
+                      </ul>
+                    </li>
+                    {# Practice Dropdown #}
+                    <li class="nav-item dropdown">
+                      <a class="nav-link dropdown-toggle {% if request.endpoint and request.endpoint.startswith('practice.') %}active{% endif %}" href="#" id="navbarDropdownPractice" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-play-circle-fill" viewBox="0 0 16 16"> <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM6.79 5.093A.5.5 0 0 0 6 5.5v5a.5.5 0 0 0 .79.407l3.5-2.5a.5.5 0 0 0 0-.814l-3.5-2.5z"/> </svg>
+                         SRS复习
+                      </a>
+                       <ul class="dropdown-menu" aria-labelledby="navbarDropdownPractice">
+                        <li><a class="dropdown-item {% if request.endpoint == 'practice.start_session' and request.args.get('mode', 'due') == 'due' %}active{% endif %}" href="{{ url_for('practice.start_session', mode='due') }}">复习到期</a></li>
+                        <li><a class="dropdown-item {% if request.endpoint == 'practice.start_session' and request.args.get('mode') == 'hardest' %}active{% endif %}" href="{{ url_for('practice.start_session', mode='hardest') }}">复习难词</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item {% if request.endpoint == 'practice.wrong_concepts' %}active{% endif %}" href="{{ url_for('practice.wrong_concepts') }}">易错词列表</a></li>
+                      </ul>
+                    </li>
+                    {# Test Link #}
+                    <li class="nav-item">
+                       <a class="nav-link {% if request.endpoint and request.endpoint.startswith('test.') %}active{% endif %}" href="{{ url_for('test.setup') }}">
+                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check2-square" viewBox="0 0 16 16"> <path d="M3 14.5A1.5 1.5 0 0 1 1.5 13V3A1.5 1.5 0 0 1 3 1.5h8a.5.5 0 0 1 0 1H3a.5.5 0 0 0-.5.5v10a.5.5 0 0 0 .5.5h10a.5.5 0 0 0 .5-.5V8a.5.5 0 0 1 1 0v5a1.5 1.5 0 0 1-1.5 1.5z"/> <path d="m8.354 10.354 7-7a.5.5 0 0 0-.708-.708L8 9.293 5.354 6.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0"/> </svg>
+                           单词测试
+                       </a>
+                    </li>
+                     {# Wander Link (Changed to setup) #}
+                    <li class="nav-item">
+                      <a class="nav-link {% if request.endpoint and request.endpoint.startswith('wander.') %}active{% endif %}" href="{{ url_for('wander.setup') }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-binoculars-fill" viewBox="0 0 16 16"> <path d="M4.5 1A1.5 1.5 0 0 0 3 2.5V3h4v-.5A1.5 1.5 0 0 0 5.5 1zM7 4v1h2V4h4v.882a.5.5 0 0 0 .276.447l.895.447A1.5 1.5 0 0 1 15 7.118V13H9v-1.5a.5.5 0 0 1 .146-.354l.854-.853A.5.5 0 0 0 10 9.5V7.5a.5.5 0 0 1-.5-.5H3.882a.5.5 0 0 0-.447.276l-.447.895A1.5 1.5 0 0 1 1 11.482V13H0V7.118a1.5 1.5 0 0 1 .83-1.342l.895-.447A.5.5 0 0 0 2 4.882V4zM1 14v.5A1.5 1.5 0 0 0 2.5 16h3A1.5 1.5 0 0 0 7 14.5V14zm8 0v.5a1.5 1.5 0 0 0 1.5 1.5h3a1.5 1.5 0 0 0 1.5-1.5V14zm-1.5-4a.5.5 0 0 0-.5.5V12a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5V10.5a.5.5 0 0 0-.5-.5zm-5 0a.5.5 0 0 0-.5.5V12a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5V10.5a.5.5 0 0 0-.5-.5z"/> </svg>
+                        随便看看
+                      </a>
+                    </li>
+                     {# History Link #}
+                     <li class="nav-item">
+                       <a class="nav-link {% if request.endpoint and request.endpoint.startswith('history.') %}active{% endif %}" href="{{ url_for('history.view_history') }}">
+                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clock-history" viewBox="0 0 16 16"> <path d="M8.515 1.019A7 7 0 0 0 8 1V0a8 8 0 0 1 .589.022zm2.004.45a7 7 0 0 0-.985-.299l.219-.976q.576.129 1.126.342zm1.37.71a7 7 0 0 0-.439-.27l.493-.87a8 8 0 0 1 .979.654l-.615.789a7 7 0 0 0-.418-.302zm1.834 1.798a7 7 0 0 0-.653-.796l.724-.69q.406.429.747.91zm.744 1.352a7 7 0 0 0-.214-.468l.893-.45a8 8 0 0 1 .45 1.088l-.95.313a7 7 0 0 0-.179-.483m-1.579 2.493q.176.436.278.9l.914-.304q-.12-.58-.28-.995l-.956.3zM8 5a.5.5 0 0 0 .5.5h2a.5.5 0 0 1 0 1h-2A.5.5 0 0 0 8 6z"/> <path d="M5.559 1.803a6.97 6.97 0 0 0-.419-.302l-.615-.789a8 8 0 0 1 .98.654l.493.87a7 7 0 0 0-.44-.27zm-1.834 1.8a7 7 0 0 0-.653.796l.724.69q.406-.429.747-.91zm-.744 1.352A7 7 0 0 0 2.79 7.7l.95-.313a7 7 0 0 0-.179.483l-.893.45q.067.241.214.468zm1.579 2.493q.176-.436.278-.9l-.914.304q-.12.58-.28.995l.956-.3z"/> <path d="M8 1a7 7 0 1 0 4.95 11.95l.707.707A8.001 8.001 0 1 1 8 0z"/> <path d="M7.5 3a.5.5 0 0 1 .5.5v5.21l3.248 1.856a.5.5 0 0 1-.496.868l-3.5-2A.5.5 0 0 1 7 9V3.5a.5.5 0 0 1 .5-.5"/> </svg>
+                           学习历史
+                       </a>
+                    </li>
+                </ul>
+                {# Optional: Add right-aligned items like settings or user info here #}
+                 {# Example: Show active session indicator #}
+                 {% if g.active_session_type %}
+                     <span class="navbar-text text-warning me-2" title="有一个正在进行的 {{ '复习' if g.active_session_type == 'practice' else '测试' }} 会话">
+                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-hourglass-split me-1" viewBox="0 0 16 16"> <path d="M2.5 15a.5.5 0 1 1 0-1h1v-1a4.5 4.5 0 0 1 2.557-4.06c.29-.139.443-.377.443-.59v-.7c0-.213-.154-.451-.443-.59A4.5 4.5 0 0 1 3.5 3V2h-1a.5.5 0 0 1 0-1h11a.5.5 0 0 1 0 1h-1v1a4.5 4.5 0 0 1-2.557 4.06c-.29.139-.443.377-.443.59v.7c0 .213.154.451.443.59A4.5 4.5 0 0 1 12.5 13v1h1a.5.5 0 0 1 0 1zm2-13v1c0 .537.12 1.045.337 1.5h6.326c.216-.455.337-.963.337-1.5V2zm3 6.35c0 .701-.478 1.236-1.011 1.492A3.5 3.5 0 0 0 4.5 13V9.25c0-.807.54-1.464 1.243-1.61.264-.055.451-.305.451-.59v-.7c0-.285-.187-.535-.451-.59C4.94 5.714 4.5 5.057 4.5 4.25V3h7v1.25c0 .807-.54 1.464-1.243 1.61-.264.055-.451.305-.451.59v.7c0 .285.187.535.451.59.704.145 1.243.803 1.243 1.61V13a3.5 3.5 0 0 0-2.989-3.158C8.978 9.586 8.5 9.052 8.5 8.351z"/> </svg>
+                         {{ '复习中' if g.active_session_type == 'practice' else '测试中' }}
+                     </span>
+                 {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    {# --- Main Content Area --- #}
+    <main class="container mt-4 mb-5">
+        {# Flash Messages Partial #}
+        {% include 'partials/_flash_messages.html' %}
+
+        {# Page Specific Content Block #}
+        <div class="page-content">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    {# --- Footer --- #}
+    <footer class="container-fluid mt-auto py-3 text-center text-muted border-top bg-light fixed-bottom">
+        © {{ now_utc().year }} 单词记忆 SRS
+    </footer>
+
+    {# --- JavaScript Includes --- #}
+    {# Bootstrap Bundle (includes Popper) #}
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    {# Chart.js (only needed if charts are used, e.g., dashboard) #}
+    {# Consider loading Chart.js only on pages that need it via blocks #}
+    {# <script src="{{ url_for('static', filename='js/chart.min.js') }}"></script> #}
+
+    {# Global custom scripts #}
+    <script src="{{ url_for('static', filename='js/script.js') }}?v=1.3"></script>
+
+    {# Block for page-specific JavaScript files #}
+    {% block scripts_extra %}{% endblock %}
+</body>
+</html>

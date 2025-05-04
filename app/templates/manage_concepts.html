@@ -1,0 +1,320 @@
+{% extends 'base.html' %}
+
+{# Set title based on view #}
+{% set view_title = "管理单词/概念" if item_type == 'concepts' else "管理固定搭配" %}
+{% block title %}{{ view_title }} - 单词记忆 SRS{% endblock %}
+
+{% block head_extra %}
+{# Page-specific styles are now mainly in style.css #}
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    {# Title changes based on view #}
+    <h1>{{ view_title }}</h1>
+
+    {# Top action buttons: View switcher and Add/Import/Export #}
+    <div class="d-flex flex-wrap gap-2">
+        {# View switcher #}
+        <div class="btn-group view-switcher" role="group" aria-label="切换视图">
+             {# Preserve filters when switching views #}
+             {% set switch_params = pagination_params.copy() %}
+             {% set _ = switch_params.pop('view', None) %} {# Remove existing view param #}
+             <a href="{{ url_for('concept.manage_concepts', view='concepts', **switch_params) }}" class="btn btn-sm btn-outline-primary"> {# JS will handle active state #}
+                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-journal-text me-1" viewBox="0 0 16 16"> <path d="M5 10.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5m0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5"/> <path d="M3 0h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-1h1v1a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v1H1V2a2 2 0 0 1 2-2"/> <path d="M1 5v-.5a.5.5 0 0 1 1 0V5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1zm0 3v-.5a.5.5 0 0 1 1 0V8h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1zm0 3v-.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1z"/> </svg>
+                单词视图
+            </a>
+            <a href="{{ url_for('concept.manage_concepts', view='collocations', **switch_params) }}" class="btn btn-sm btn-outline-primary"> {# JS will handle active state #}
+                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chat-left-dots-fill me-1" viewBox="0 0 16 16"> <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4.414a1 1 0 0 0-.707.293L.854 15.146A.5.5 0 0 1 0 14.793zm5 4a1 1 0 1 0-2 0 1 1 0 0 0 2 0m4 0a1 1 0 1 0-2 0 1 1 0 0 0 2 0m3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2"/> </svg>
+                搭配视图
+            </a>
+        </div>
+        {# Add/Import/Export buttons #}
+         <div class="d-flex gap-2">
+            <a href="{{ url_for('concept.add_concept') }}" class="btn btn-sm btn-success" title="添加新单词或概念">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-lg me-1" viewBox="0 0 16 16"> <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2Z"/> </svg>
+                添加
+            </a>
+             <div class="btn-group">
+              <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" title="导入或导出数据">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-database-down me-1" viewBox="0 0 16 16"> <path d="M12.5 9a.5.5 0 0 1 .5.5v1.293l1.146-1.147a.5.5 0 0 1 .708.708l-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 0 1 .708-.708L12 10.793V9.5a.5.5 0 0 1 .5-.5"/> <path d="M12 5v4a.5.5 0 0 0 1 0V5a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v4a.5.5 0 0 0 1 0V5z"/> <path d="M0 8a2 2 0 1 1 4 0 2 2 0 0 1-4 0m4 4.5a.5.5 0 0 0-1 0V13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-.5a.5.5 0 0 0-1 0V13H4zM4 8a1 1 0 1 0 0-2 1 1 0 0 0 0 2"/> </svg>
+                导入/导出
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="{{ url_for('concept.import_csv') }}">导入 CSV</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('concept.export_csv') }}">导出 CSV</a></li>
+              </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Search and Filter Form #}
+<form method="GET" action="{{ url_for('concept.manage_concepts') }}" class="mb-4 row g-2 align-items-center bg-light p-3 rounded border">
+    <input type="hidden" name="view" value="{{ item_type }}"> {# Keep current view #}
+    <div class="col-md-4 col-sm-12">
+        <label for="searchQueryInput" class="visually-hidden">搜索</label>
+        <input type="text" class="form-control form-control-sm" id="searchQueryInput"
+               placeholder="{{ '搜索搭配、例句、源单词...' if item_type == 'collocations' else '搜索单词、词源、近义词...' }}"
+               name="q" value="{{ search_query or '' }}">
+    </div>
+    <div class="col-md-2 col-sm-6">
+        <label for="posFilterSelect" class="visually-hidden">按词性过滤</label>
+        <select class="form-select form-select-sm" id="posFilterSelect" name="pos" title="按源单词词性过滤">
+            <option value="">所有词性</option>
+            {% for pos in common_pos %}
+            <option value="{{ pos }}" {% if pos == selected_pos %}selected{% endif %}>{{ pos }}*</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <label for="tagFilterSelect" class="visually-hidden">按标签过滤</label>
+        <select class="form-select form-select-sm" id="tagFilterSelect" name="tag" title="按源单词标签过滤">
+            <option value="">所有标签</option>
+            {% for tag in all_tags %}
+            <option value="{{ tag.name }}" {% if tag.name == selected_tag %}selected{% endif %}>{{ tag.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-3 col-sm-12 d-flex gap-1 filter-action-buttons">
+        <input type="hidden" name="page" value="1"> {# Reset to page 1 on new filter #}
+        <button class="btn btn-primary btn-sm flex-grow-1 flex-md-grow-0" type="submit">
+             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16"> <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/> </svg>
+            筛选
+        </button>
+        {# Show clear button only if any filter is active #}
+        {% if search_query or selected_tag or selected_pos %}
+            <a href="{{ url_for('concept.manage_concepts', view=item_type, page=1) }}" class="btn btn-outline-secondary btn-sm" title="清除所有筛选条件">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16"> <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/> </svg>
+                 <span class="d-none d-md-inline ms-1">清除</span>
+            </a>
+         {% endif %}
+    </div>
+</form>
+
+{# --- Display Table based on view --- #}
+{% if items %}
+    {% if item_type == 'concepts' %}
+        {# --- Concepts Table with Collapsible Rows --- #}
+        <div class="table-responsive concept-list shadow-sm">
+            <table class="table table-sm table-hover align-middle mb-0"> {# Remove bottom margin #}
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 1%;" class="ps-2"></th> {# Expand button column #}
+                        <th scope="col" style="width: 20%;">单词/概念</th>
+                        <th scope="col" style="width: 25%;">标签</th>
+                        <th scope="col" style="width: 10%;">掌握度</th>
+                        <th scope="col" class="text-center" style="width: 5%;" title="含义数量"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-list-columns-reverse" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M0 .5A.5.5 0 0 1 .5 0h2a.5.5 0 0 1 0 1h-2A.5.5 0 0 1 0 .5m4 0a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1h-10A.5.5 0 0 1 4 .5m-4 2A.5.5 0 0 1 .5 2h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5m4 0a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1h-10a.5.5 0 0 1-.5-.5m-4 2A.5.5 0 0 1 .5 4h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5m4 0a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1h-10A.5.5 0 0 1 4 4.5m-4 2A.5.5 0 0 1 .5 6h2a.5.5 0 0 1 0 1h-2A.5.5 0 0 1 0 6.5m4 0a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1h-10A.5.5 0 0 1 4 6.5m-4 2A.5.5 0 0 1 .5 8h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5m4 0a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1h-10a.5.5 0 0 1-.5-.5m-4 2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5m4 0a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1h-10a.5.5 0 0 1-.5-.5m-4 2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5m4 0a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1h-10a.5.5 0 0 1-.5-.5m-4 2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5m4 0a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1h-10a.5.5 0 0 1-.5-.5"/></svg></th>
+                        <th scope="col" class="text-center" style="width: 5%;" title="搭配数量"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-link-45deg" viewBox="0 0 16 16"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5l-1.828-.457a3 3 0 0 0-2.66 1.491zm11.314-2.776a3 3 0 0 0-4.243-4.243l-1.828 1.829a3 3 0 1 0 4.243 4.243zm-7.429 1.829a.5.5 0 0 1 .707 0l1.414 1.414a.5.5 0 0 1-.707.707l-1.414-1.414a.5.5 0 0 1 0-.707m-4.243 2.828a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 1 1-.707.707L5.369 8.414a.5.5 0 0 1 0-.707"/></svg></th>
+                        <th scope="col" class="text-center" style="width: 5%;" title="累计错误次数"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-bug-fill" viewBox="0 0 16 16"><path d="M4.978.855a.5.5 0 1 0-.956.29l.41 1.352A5 5 0 0 0 3 5h10a5 5 0 0 0-1.432-2.503l.41-1.352a.5.5 0 1 0-.956-.29l-.291.956A5 5 0 0 0 8 1a5 5 0 0 0-2.731.811z"/><path d="M13 6v7a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6zm-4-1H7v1h2zm-2 3v1h2v-1zm4 0v1h2v-1z"/></svg></th>
+                        <th scope="col" style="width: 14%;">下次复习</th>
+                        <th scope="col" style="width: 15%;" class="text-end pe-3">操作</th> {# Align actions right #}
+                    </tr>
+                </thead>
+                <tbody>
+                    {# Loop through concepts passed from the route #}
+                    {% for concept in items %} {# items now contain full concept details #}
+                    {# Determine if the concept is due for review #}
+                    {% set is_due = concept.srs_due_date and parse_datetime_utc(concept.srs_due_date) <= now_utc() %}
+                    {% set collapse_id = 'collapse-' + concept.id|string %}
+
+                    {# --- Main Concept Row --- #}
+                    {# Add data-label attributes for responsive view #}
+                    <tr class="{{ 'table-warning due-highlight' if is_due else '' }}">
+                        <td data-label="" class="ps-2"> {# Expand button #}
+                            <button class="btn btn-sm p-0 expand-btn collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#{{ collapse_id }}" aria-expanded="false" aria-controls="{{ collapse_id }}" title="查看/隐藏详情">
+                               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-down" viewBox="0 0 16 16"> <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708"/> </svg>
+                               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-up" viewBox="0 0 16 16"> <path fill-rule="evenodd" d="M7.646 4.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 5.707l-5.646 5.647a.5.5 0 0 1-.708-.708z"/> </svg>
+                            </button>
+                        </td>
+                        <td data-label="单词/概念:" class="fw-bold">
+                             {# Link to edit page, passing current view context #}
+                             <a href="{{ url_for('concept.edit_concept', concept_id=concept.id, view=item_type, page=current_page, q=search_query, tag=selected_tag, pos=selected_pos) }}" class="text-decoration-none">{{ concept.term }}</a>
+                              {% if concept.phonetic %}<small class="d-block text-muted fw-normal">[{{ concept.phonetic }}]</small>{% endif %}
+                        </td>
+                         <td data-label="标签:">
+                             <div class="d-flex flex-wrap gap-1">
+                                 {% for tag in concept.tags %}
+                                    {# Link to filter by this tag #}
+                                    <a href="{{ url_for('concept.manage_concepts', view='concepts', tag=tag.name, page=1) }}" class="badge rounded-pill bg-info-subtle text-info-emphasis text-decoration-none border border-info-subtle">{{ tag.name }}</a>
+                                 {% else %}<span class="text-muted small">-</span>{% endfor %}
+                             </div>
+                         </td>
+                         <td data-label="掌握度:">
+                            {# Classify mastery using the utility function #}
+                            {% set mastery = classify_mastery(concept.srs_interval) %}
+                            <span class="badge mastery-badge mastery-{{ mastery|lower }}">{{ mastery }}</span>
+                         </td>
+                         <td data-label="含义:" class="text-center">{{ concept.meaning_count }}</td>
+                         <td data-label="搭配:" class="text-center">{{ concept.collocation_count }}</td>
+                         <td data-label="错误:" class="text-center">
+                            {# Use different background based on error count #}
+                            <span class="badge rounded-pill {{ 'bg-danger' if concept.error_count > 2 else 'bg-warning text-dark' if concept.error_count > 0 else 'bg-success-subtle text-success-emphasis border border-success-subtle' }}">
+                                {{ concept.error_count }}</span>
+                        </td>
+                        <td data-label="下次复习:" class="small">
+                           {% if concept.srs_due_date %}
+                           {# Highlight if due #}
+                           <span class="{{ 'text-danger fw-bold' if is_due else 'text-muted' }}" title="具体时间: {{ format_datetime_local(concept.srs_due_date) }}">
+                               {{ format_due_date_relative(concept.srs_due_date) }}</span>
+                           {% else %}<span class="text-muted">N/A</span>{% endif %}
+                        </td>
+                        <td data-label="操作:" class="text-end pe-3">
+                             {# Action buttons (Edit, Delete) #}
+                             <div class="btn-group btn-group-sm" role="group" aria-label="Concept Actions">
+                                 <a href="{{ url_for('concept.edit_concept', concept_id=concept.id, view=item_type, page=current_page, q=search_query, tag=selected_tag, pos=selected_pos) }}" class="btn btn-outline-secondary" title="编辑">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16"> <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/> <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/> </svg>
+                                 </a>
+                                 {# Button to trigger the delete confirmation modal #}
+                                 <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteConfirmModal"
+                                         data-bs-item-id="{{ concept.id }}"
+                                         data-bs-item-term="{{ concept.term }}"
+                                         data-bs-item-type="concept" {# Specify item type #}
+                                         data-bs-origin-view="{{ item_type }}"
+                                         data-bs-origin-page="{{ current_page }}"
+                                         data-bs-origin-search="{{ search_query }}"
+                                         data-bs-origin-tag="{{ selected_tag }}"
+                                         data-bs-origin-pos="{{ selected_pos }}"
+                                         title="删除">
+                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash3-fill" viewBox="0 0 16 16"> <path d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5Zm-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5ZM4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06Zm6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528ZM8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5Z"/> </svg>
+                                 </button>
+                            </div>
+                         </td>
+                    </tr>
+                    {# --- Collapsible Row for Details --- #}
+                    <tr class="concept-details-row">
+                        <td colspan="9"> {# Span across all columns #}
+                             <div class="collapse collapse-content" id="{{ collapse_id }}">
+                                {# Display Meanings #}
+                                {% if concept.meanings %}
+                                    <h6 class="text-muted small">含义:</h6>
+                                    <dl class="definition-list small mb-2">
+                                        {% for meaning in concept.meanings %}
+                                            <dt class="d-inline">{{ meaning.part_of_speech }}</dt>
+                                            <dd class="d-inline ms-1">{{ meaning.definition }}; </dd>
+                                        {% endfor %}
+                                    </dl>
+                                {% endif %}
+                                {# Display Collocations #}
+                                {% if concept.collocations %}
+                                    <h6 class="text-muted small">搭配/例句:</h6>
+                                     <ul class="list-unstyled small mb-2">
+                                        {% for coll in concept.collocations %}
+                                        <li><strong class="text-primary">{{ coll.phrase }}</strong>{% if coll.example %}<span class="text-muted fst-italic ms-2">- {{ coll.example }}</span>{% endif %}</li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+                                {# Display Etymology #}
+                                {% if concept.etymology %}
+                                    <h6 class="text-muted small">词源:</h6>
+                                    <p class="small mb-2">{{ concept.etymology }}</p>
+                                {% endif %}
+                                {# Display Synonyms #}
+                                {% if concept.synonyms %}
+                                    <h6 class="text-muted small">近义词:</h6>
+                                    <p class="small mb-0">{{ concept.synonyms }}</p>
+                                {% endif %}
+                             </div>
+                        </td>
+                    </tr>
+                    {% endfor %} {# End concept loop #}
+                </tbody>
+            </table>
+        </div>
+
+    {% elif item_type == 'collocations' %}
+        {# --- Collocations Table --- #}
+         <div class="table-responsive collocation-list shadow-sm">
+            <table class="table table-sm table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col" style="width: 35%;">固定搭配</th>
+                        <th scope="col" style="width: 45%;">例句/说明</th>
+                        <th scope="col" style="width: 20%;">所属单词</th>
+                    </tr>
+                </thead>
+                <tbody>
+                     {% for coll in items %} {# items are collocation dicts #}
+                    {# Add data-label attributes for responsive view #}
+                    <tr>
+                        <td data-label="搭配:" class="fw-bold">{{ coll.phrase }}</td>
+                        <td data-label="例句:" class="small text-muted fst-italic">{{ coll.example or '-' }}</td>
+                        <td data-label="所属单词:">
+                           {# Link to the edit page of the source concept #}
+                           <a href="{{ url_for('concept.edit_concept', concept_id=coll.concept_id, view=item_type, page=current_page, q=search_query, tag=selected_tag, pos=selected_pos) }}" class="source-concept-link" title="查看/编辑源单词">
+                               {{ coll.concept_term }}
+                               {% if coll.concept_phonetic %}<small class="ms-1 fw-normal">[{{ coll.concept_phonetic }}]</small>{% endif %}
+                           </a>
+                           {# Maybe add edit/delete for collocation itself later? Requires new routes/logic #}
+                        </td>
+                    </tr>
+                     {% endfor %} {# End collocation loop #}
+                </tbody>
+            </table>
+        </div>
+    {% endif %} {# End view type check #}
+
+    {# --- Pagination --- #}
+    {% if total_pages > 1 %}
+    <div class="mt-4 d-flex justify-content-center">
+        {# Include the pagination partial #}
+        {% include 'partials/_pagination.html' %}
+    </div>
+    {% endif %}
+
+    {# --- Delete Confirmation Modal --- #}
+    {# Define the modal structure once #}
+    <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="deleteConfirmModalLabel">确认删除</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+              确定要永久删除 <span id="itemTypeToDelete" class="fw-bold"></span>
+              "<strong id="termToDelete"></strong>" 吗？此操作不可撤销。
+              {# Specific warning for concept deletion #}
+              <span id="deleteConceptWarning" class="text-danger d-block mt-2 d-none">注意：删除单词将同时删除其所有关联的含义和搭配记录。</span>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+            {# Form for submitting the delete request #}
+            <form id="deleteForm" method="POST" action="" style="display: inline;">
+                {# Hidden fields to pass origin parameters for redirect #}
+                <input type="hidden" id="deleteOriginView" name="origin_view" value="">
+                <input type="hidden" id="deleteOriginPage" name="origin_page" value="">
+                <input type="hidden" id="deleteOriginSearch" name="origin_search" value="">
+                <input type="hidden" id="deleteOriginTag" name="origin_tag" value="">
+                <input type="hidden" id="deleteOriginPos" name="origin_pos" value="">
+                <button type="submit" class="btn btn-danger">确认删除</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+{% else %} {# No items found #}
+    {# Display message when no items match filters or exist #}
+    {% set item_name = "单词/概念" if item_type == 'concepts' else "固定搭配" %}
+    <div class="alert alert-warning text-center mt-4" role="alert">
+      {% if search_query or selected_tag or selected_pos %}
+         没有找到符合筛选条件的{{ item_name }}。
+         <a href="{{ url_for('concept.manage_concepts', view=item_type, page=1) }}" class="alert-link">清除筛选条件?</a>
+      {% else %}
+         你的词库中还没有添加任何{{ item_name }}。
+         {% if item_type == 'concepts' %}
+            <a href="{{ url_for('concept.add_concept') }}" class="alert-link">现在就去添加一个吧！</a>
+         {% else %}
+             <a href="{{ url_for('concept.manage_concepts', view='concepts') }}" class="alert-link">先去添加一些单词及其搭配吧！</a>
+         {% endif %}
+      {% endif %}
+    </div>
+{% endif %} {# End items check #}
+
+{% endblock %}
+
+{% block scripts_extra %}
+{# Include the specific JS file for this page's interactions #}
+<script src="{{ url_for('static', filename='js/manage_concepts.js') }}"></script>
+{% endblock %}

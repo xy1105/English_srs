@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+
+{% block title %}复习中: {{ concept.term }} - 单词记忆 SRS{% endblock %}
+
+{% block head_extra %}
+{# Styles specific to practice session are now mainly in style.css #}
+<style>
+    /* Additional minor style adjustments if needed */
+    .practice-card .card-title .btn-edit-concept {
+        opacity: 0.6;
+        transition: opacity 0.2s ease;
+        font-size: 0.8em; /* Make edit button smaller */
+        padding: 0.1rem 0.4rem;
+        vertical-align: middle;
+    }
+    .practice-card .card-title:hover .btn-edit-concept {
+        opacity: 1;
+    }
+    .quality-buttons .btn {
+        min-width: 80px; /* Adjust button width */
+    }
+    .session-controls {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="position-relative"> {# Relative container for absolute positioning of controls #}
+    {# --- Progress Bar --- #}
+    <div class="progress-container mb-4">
+        <div class="progress" style="height: 8px;" role="progressbar" aria-label="复习进度" aria-valuenow="{{ current_progress }}" aria-valuemin="1" aria-valuemax="{{ total_in_session }}">
+          <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" style="width: {{ (current_progress / total_in_session * 100)|round }}%;"></div>
+        </div>
+        <div class="text-center text-muted small mt-1">{{ current_progress }} / {{ total_in_session }}</div>
+    </div>
+
+    {# --- Practice Card --- #}
+    <div class="card practice-card shadow-sm mb-4">
+        <div class="card-body p-lg-5 p-4 d-flex flex-column position-relative"> {# Added position-relative #}
+
+            {# --- Session Controls (Quit Button) --- #}
+            <div class="session-controls">
+                <form action="{{ url_for('practice.quit_session') }}" method="POST" class="d-inline" onsubmit="return confirm('确定要退出当前的复习会话吗？进度将不会保存。');">
+                    <button type="submit" class="btn btn-sm btn-outline-danger" title="退出当前复习">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16"> <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/> </svg>
+                        退出
+                    </button>
+                </form>
+            </div>
+
+            {# --- Question Part --- #}
+            <div class="question-area text-center mb-4">
+                <h2 class="card-title display-3 mb-1">
+                    {{ concept.term }}
+                    {# Edit Button (Link opens in new tab) #}
+                     <a href="{{ url_for('concept.edit_concept', concept_id=concept.id) }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary btn-edit-concept ms-2" title="编辑此单词（在新标签页打开）">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16"> <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/> <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"/> </svg>
+                     </a>
+                </h2>
+                 {# Phonetic Display & Audio Button #}
+                {% if concept.phonetic %}
+                    <p class="text-muted fs-5 mb-3">[{{ concept.phonetic }}]
+                        {# Audio Button (uses global playAudio function) #}
+                        {% if concept.audio_url %}
+                            <button type="button" class="btn btn-sm btn-outline-secondary btn-play-audio ms-2" onclick="playAudio('{{ concept.audio_url }}')" title="播放发音">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-volume-up-fill" viewBox="0 0 16 16"> <path d="M11.536 14.01A8.473 8.473 0 0 0 14.026 8a8.473 8.473 0 0 0-2.49-6.01l-.708.707A7.476 7.476 0 0 1 13.025 8c0 2.071-.84 3.946-2.197 5.303l.708.707z"/> <path d="M10.121 12.596A6.48 6.48 0 0 0 12.025 8a6.48 6.48 0 0 0-1.904-4.596l-.707.707A5.483 5.483 0 0 1 11.025 8a5.483 5.483 0 0 1-1.61 3.89l.706.706z"/> <path d="M8.707 11.182A4.486 4.486 0 0 0 10.025 8a4.486 4.486 0 0 0-1.318-3.182L8 5.525A3.489 3.489 0 0 1 9.025 8 3.489 3.489 0 0 1 8 10.475l.707.707zM6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06z"/> </svg>
+                            </button>
+                        {% endif %}
+                    </p>
+                {% endif %}
+                 {# Show Answer Button #}
+                 <button id="showAnswerBtn" class="btn btn-outline-primary btn-lg mt-3">显示答案 (空格键)</button>
+            </div>
+
+            {# --- Answer Part (Initially Hidden via CSS) --- #}
+            <div id="answerSection" class="answer-section flex-grow-1 d-flex flex-column"> {# Takes remaining space #}
+
+                 <div class="answer-content mb-auto"> {# Content pushed down by quality buttons #}
+                    {# Etymology #}
+                    {% if concept.etymology %}
+                    <div class="mb-3 pb-2 border-bottom">
+                        <h6 class="text-muted small fw-bold text-uppercase">词源/词根</h6>
+                        <p class="small">{{ concept.etymology }}</p>
+                    </div>
+                    {% endif %}
+
+                     {# Synonyms #}
+                    {% if concept.synonyms %}
+                    <div class="mb-3 pb-2 border-bottom">
+                        <h6 class="text-muted small fw-bold text-uppercase">同义/近义</h6>
+                        <p class="small">{{ concept.synonyms }}</p>
+                    </div>
+                    {% endif %}
+
+                    {# Meanings #}
+                    {% if concept.meanings %}
+                    <div class="mb-3 pb-2 border-bottom">
+                        <h6 class="text-muted small fw-bold text-uppercase">含义</h6>
+                        <dl class="definition-list mb-0">
+                            {% for meaning in concept.meanings %}
+                                <dt>{{ meaning.part_of_speech }}</dt>
+                                <dd>{{ meaning.definition }}</dd>
+                            {% endfor %}
+                        </dl>
+                    </div>
+                    {% endif %}
+
+                     {# Collocations #}
+                    {% if concept.collocations %}
+                    <div class="mb-3">
+                        <h6 class="text-muted small fw-bold text-uppercase">搭配/例句</h6>
+                        {% for coll in concept.collocations %}
+                            <div class="collocation-item">
+                                <strong>{{ coll.phrase }}</strong>
+                                {% if coll.example %}<span class="example d-block">{{ coll.example }}</span>{% endif %} {# Display example below #}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div> {# End Answer Content #}
+
+                {# --- SRS Quality Buttons --- #}
+                <div class="mt-4 pt-3 border-top quality-buttons text-center">
+                    <p class="mb-2 text-muted small">你的掌握程度如何？ (按数字键 1-4)</p>
+                    {# Form submits the selected quality value #}
+                    <form method="POST" action="{{ url_for('practice.submit_review') }}" id="reviewForm">
+                         {# Use distinct classes for easier styling/JS targeting if needed #}
+                         <button type="submit" name="quality" value="again" class="btn btn-lg btn-quality-again" data-bs-toggle="tooltip" title="完全忘记 (间隔重置)">
+                            <span class="d-none d-sm-inline">忘记</span> (1)
+                         </button>
+                         <button type="submit" name="quality" value="hard" class="btn btn-lg btn-quality-hard" data-bs-toggle="tooltip" title="困难 (间隔略增)">
+                             <span class="d-none d-sm-inline">困难</span> (2)
+                         </button>
+                         <button type="submit" name="quality" value="good" class="btn btn-lg btn-quality-good" data-bs-toggle="tooltip" title="良好 (间隔增加)">
+                             <span class="d-none d-sm-inline">良好</span> (3)
+                         </button>
+                        <button type="submit" name="quality" value="easy" class="btn btn-lg btn-quality-easy" data-bs-toggle="tooltip" title="轻松 (间隔大增)">
+                             <span class="d-none d-sm-inline">轻松</span> (4)
+                         </button>
+                    </form>
+                </div>
+
+            </div> {# End Answer Section #}
+        </div> {# End Card Body #}
+    </div> {# End Card #}
+</div> {# End Relative Wrapper #}
+
+{# Hidden audio element will be created by global playAudio function if needed #}
+
+{% endblock %}
+
+{% block scripts_extra %}
+{# Include the specific JS file for practice session interactions #}
+<script src="{{ url_for('static', filename='js/practice.js') }}"></script>
+{% endblock %}

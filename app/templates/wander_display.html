@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+
+{# Dynamic title based on mode #}
+{% set page_title = "随便看看" %}
+{% if mode == 'concept' and item %} {% set page_title = "漫游单词: " + item.term %}
+{% elif mode == 'collocation' and item %} {% set page_title = "漫游搭配: " + item.phrase %}
+{% endif %}
+{% if tag_name %} {% set page_title = page_title + " (标签: " + tag_name + ")" %} {% endif %}
+
+{% block title %}{{ page_title }} - 单词记忆 SRS{% endblock %}
+
+{% block head_extra %}
+{# Styles specific to wander display are now mainly in style.css #}
+<style>
+    /* Add any minor overrides here if needed */
+    .wander-card .card-title { font-weight: 500; }
+    .wander-card .concept-term-link { font-weight: 500; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card wander-card shadow mb-4">
+        <div class="card-header bg-light py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                 <span class="text-muted small">
+                    漫游模式: <span class="badge bg-secondary me-2">{{ '单词' if mode == 'concept' else '搭配' }}</span>
+                    范围: <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle">{{ tag_name if tag_name else '所有' }}</span>
+                 </span>
+                 <a href="{{ url_for('wander.setup') }}" class="btn btn-sm btn-outline-secondary" title="更改漫游设置">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear" viewBox="0 0 16 16"> <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"/> <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.115 2.692l.319.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z"/> </svg>
+                     设置
+                 </a>
+            </div>
+        </div>
+        <div class="card-body p-lg-5 p-4">
+
+            {# --- Display based on mode --- #}
+
+            {# --- Mode: Concept --- #}
+            {% if mode == 'concept' and item %}
+                <h2 class="card-title display-4 mb-3 text-center text-primary">{{ item.term }}</h2>
+                {% if item.phonetic %}
+                    <p class="text-muted fs-5 text-center mb-4">[{{ item.phonetic }}]
+                        {% if item.audio_url %}
+                            <button type="button" class="btn btn-sm btn-outline-secondary btn-play-audio ms-2" onclick="playAudio('{{ item.audio_url }}')" title="播放发音">
+                               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-volume-up-fill" viewBox="0 0 16 16"> <path d="M11.536 14.01A8.473 8.473 0 0 0 14.026 8a8.473 8.473 0 0 0-2.49-6.01l-.708.707A7.476 7.476 0 0 1 13.025 8c0 2.071-.84 3.946-2.197 5.303l.708.707z"/> <path d="M10.121 12.596A6.48 6.48 0 0 0 12.025 8a6.48 6.48 0 0 0-1.904-4.596l-.707.707A5.483 5.483 0 0 1 11.025 8a5.483 5.483 0 0 1-1.61 3.89l.706.706z"/> <path d="M8.707 11.182A4.486 4.486 0 0 0 10.025 8a4.486 4.486 0 0 0-1.318-3.182L8 5.525A3.489 3.489 0 0 1 9.025 8 3.489 3.489 0 0 1 8 10.475l.707.707zM6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06z"/> </svg>
+                            </button>
+                        {% endif %}
+                    </p>
+                {% endif %}
+
+                <hr class="my-4">
+
+                {# Display Concept Details (Meanings, Collocations etc.) #}
+                {% if item.etymology %} <div class="mb-3 pb-3 border-bottom"> <h6 class="text-muted small fw-bold text-uppercase">词源/词根</h6> <p>{{ item.etymology }}</p> </div> {% endif %}
+                {% if item.synonyms %} <div class="mb-3 pb-3 border-bottom"> <h6 class="text-muted small fw-bold text-uppercase">同义/近义</h6> <p>{{ item.synonyms }}</p> </div> {% endif %}
+                {% if item.meanings %} <div class="mb-3 pb-3 border-bottom"> <h6 class="text-muted small fw-bold text-uppercase">含义</h6> <dl class="definition-list mb-0"> {% for meaning in item.meanings %} <dt>{{ meaning.part_of_speech }}</dt> <dd>{{ meaning.definition }}</dd> {% endfor %} </dl> </div> {% endif %}
+                {% if item.collocations %} <div class="mb-3 pb-3 border-bottom"> <h6 class="text-muted small fw-bold text-uppercase">搭配/例句</h6> {% for coll in item.collocations %} <div class="collocation-item"> <strong>{{ coll.phrase }}</strong> {% if coll.example %}<span class="example d-block">{{ coll.example }}</span>{% endif %} </div> {% endfor %} </div> {% endif %}
+
+                 {# Display Tags #}
+                 {% if item.tags %}
+                    <div class="mt-3 pt-3">
+                        <h6 class="text-muted d-inline-block me-2 small fw-bold text-uppercase">标签:</h6>
+                        <div class="d-inline-block">
+                         {% for tag in item.tags %}
+                            <a href="{{ url_for('concept.manage_concepts', view='concepts', tag=tag.name, page=1) }}" class="badge rounded-pill bg-info-subtle text-info-emphasis text-decoration-none border border-info-subtle me-1" target="_blank" rel="noopener noreferrer">{{ tag.name }}</a>
+                         {% endfor %}
+                        </div>
+                    </div>
+                 {% endif %}
+
+                 {# Edit Button for Concept #}
+                  <div class="mt-4 text-center">
+                     <a href="{{ url_for('concept.edit_concept', concept_id=item.id) }}" class="btn btn-sm btn-outline-secondary" target="_blank" rel="noopener noreferrer">
+                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square me-1" viewBox="0 0 16 16"> <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/> <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/> </svg>
+                         编辑此单词
+                     </a>
+                 </div>
+
+            {# --- Mode: Collocation --- #}
+            {% elif mode == 'collocation' and item %}
+                 <h2 class="card-title display-4 mb-3 text-center text-info">{{ item.phrase }}</h2>
+                 <p class="text-muted fs-5 text-center mb-4">
+                    属于单词: <a href="{{ url_for('concept.edit_concept', concept_id=item.concept_id) }}" class="concept-term-link" target="_blank" rel="noopener noreferrer" title="查看或编辑源单词">{{ item.term }}</a>
+                    {% if item.phonetic %}
+                        <span class="ms-2">[{{ item.phonetic }}]</span>
+                        {% if item.audio_url %}
+                             <button type="button" class="btn btn-sm btn-outline-secondary btn-play-audio ms-2" onclick="playAudio('{{ item.audio_url }}')" title="播放源单词发音">
+                               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-volume-up-fill" viewBox="0 0 16 16"> <path d="M11.536 14.01A8.473 8.473 0 0 0 14.026 8a8.473 8.473 0 0 0-2.49-6.01l-.708.707A7.476 7.476 0 0 1 13.025 8c0 2.071-.84 3.946-2.197 5.303l.708.707z"/> <path d="M10.121 12.596A6.48 6.48 0 0 0 12.025 8a6.48 6.48 0 0 0-1.904-4.596l-.707.707A5.483 5.483 0 0 1 11.025 8a5.483 5.483 0 0 1-1.61 3.89l.706.706z"/> <path d="M8.707 11.182A4.486 4.486 0 0 0 10.025 8a4.486 4.486 0 0 0-1.318-3.182L8 5.525A3.489 3.489 0 0 1 9.025 8 3.489 3.489 0 0 1 8 10.475l.707.707zM6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06z"/> </svg>
+                            </button>
+                        {% endif %}
+                    {% endif %}
+                 </p>
+
+                <hr class="my-4">
+
+                {% if item.example %}
+                    <div class="mb-3">
+                        <h6 class="text-muted small fw-bold text-uppercase">例句/说明</h6>
+                        <blockquote class="blockquote fs-5 fst-italic">
+                            <p>"{{ item.example }}"</p>
+                        </blockquote>
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center">(暂无例句)</p>
+                {% endif %}
+
+                 {# Edit Button for Source Concept #}
+                 <div class="mt-4 text-center">
+                     <a href="{{ url_for('concept.edit_concept', concept_id=item.concept_id) }}" class="btn btn-sm btn-outline-secondary" target="_blank" rel="noopener noreferrer">
+                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square me-1" viewBox="0 0 16 16"> <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/> <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/> </svg>
+                         编辑源单词
+                     </a>
+                 </div>
+
+            {# --- Fallback if no item or mode mismatch --- #}
+            {% else %}
+                 <div class="alert alert-danger text-center" role="alert">
+                     无法加载漫游内容。请返回设置页面重试。
+                 </div>
+            {% endif %}
+
+        </div> {# End Card Body #}
+
+        {# --- Navigation Buttons --- #}
+        <div class="card-footer bg-light text-center navigation-buttons py-3 border-top">
+             <a href="{{ url_for('wander.setup') }}" class="btn btn-secondary me-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left-square-fill me-1" viewBox="0 0 16 16"> <path d="M16 14a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2zm-4.5-6.5H5.707l2.147-2.146a.5.5 0 1 0-.708-.708l-3 3a.5.5 0 0 0 0 .708l3 3a.5.5 0 0 0 .708-.708L5.707 8.5H11.5a.5.5 0 0 0 0-1"/> </svg>
+                返回设置
+            </a>
+            {# Next button preserves mode and tag filter #}
+            <a href="{{ url_for('wander.display', mode=mode, tag_id=tag_id) }}" class="btn btn-primary">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-clockwise me-1" viewBox="0 0 16 16"> <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z"/> <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466"/> </svg>
+                 下一个{{ '单词' if mode == 'concept' else '搭配' }}
+            </a>
+        </div>
+
+    </div> {# End Card #}
+</div> {# End Container #}
+
+{# Hidden audio element will be created by global playAudio function if needed #}
+{% endblock %}
+
+{% block scripts_extra %}
+{# Global script handles audio #}
+{# <script src="{{ url_for('static', filename='js/wander.js') }}"></script> #} {# No specific JS needed now #}
+{% endblock %}

@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block title %}随便看看设置 - 单词记忆 SRS{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+<div class="col-lg-8 col-md-10">
+
+<h1>随便看看 - 设置</h1>
+<p class="lead text-muted mb-4">选择你想漫游的内容和范围。</p>
+
+{% if total_concepts > 0 or total_collocations > 0 %}
+<form method="POST" action="{{ url_for('wander.setup') }}" class="needs-validation" novalidate> {# Changed action to POST for setup #}
+
+    {# 1. Wander Mode Selection #}
+    <div class="mb-4 p-3 border rounded bg-light shadow-sm">
+        <label class="form-label fw-bold fs-5 mb-3">1. 选择漫游模式</label>
+        {# Concept Radio #}
+        <div class="form-check mb-2">
+            <input class="form-check-input" type="radio" name="wander_mode" id="mode_concept" value="concept" checked {% if total_concepts == 0 %}disabled{% endif %}>
+            <label class="form-check-label" for="mode_concept">
+                <strong>漫游单词</strong> (共 {{ total_concepts }} 个)
+            </label>
+            {% if total_concepts == 0 %}<span class="badge bg-warning text-dark ms-2">无可用单词</span>{% endif %}
+        </div>
+        {# Collocation Radio #}
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="wander_mode" id="mode_collocation" value="collocation" {% if total_collocations == 0 %}disabled{% endif %}>
+            <label class="form-check-label" for="mode_collocation">
+                <strong>漫游搭配</strong> (共 {{ total_collocations }} 个)
+            </label>
+             {% if total_collocations == 0 %}<span class="badge bg-warning text-dark ms-2">无可用搭配</span>{% endif %}
+        </div>
+    </div>
+
+    {# 2. Wander Scope (Filter by Tag) #}
+    <div class="mb-4 p-3 border rounded bg-light shadow-sm">
+        <label for="tag_filter" class="form-label fw-bold fs-5">2. 选择范围 (按标签)</label>
+        <select class="form-select form-select-lg" id="tag_filter" name="tag_filter">
+            <option value="" selected>所有单词/搭配</option>
+            {% if all_tags %}
+                {% for tag in all_tags %}
+                <option value="{{ tag.id }}">{{ tag.name }}</option>
+                {% endfor %}
+            {% else %}
+                <option value="" disabled>没有可用的标签</option>
+            {% endif %}
+        </select>
+        <div class="form-text mt-2">选择一个标签，将只漫游该标签下的单词或其搭配。</div>
+    </div>
+
+    {# --- Action Buttons --- #}
+    <div class="d-flex justify-content-center mt-4 gap-3">
+         <a href="{{ url_for('main.index') }}" class="btn btn-secondary btn-lg">
+             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left-short" viewBox="0 0 16 16"> <path fill-rule="evenodd" d="M12 8a.5.5 0 0 1-.5.5H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H11.5a.5.5 0 0 1 .5.5"/> </svg>
+             返回
+         </a>
+         {# Submit the form via POST #}
+         <button type="submit" class="btn btn-success btn-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-binoculars-fill me-1" viewBox="0 0 16 16"> <path d="M4.5 1A1.5 1.5 0 0 0 3 2.5V3h4v-.5A1.5 1.5 0 0 0 5.5 1zM7 4v1h2V4h4v.882a.5.5 0 0 0 .276.447l.895.447A1.5 1.5 0 0 1 15 7.118V13H9v-1.5a.5.5 0 0 1 .146-.354l.854-.853A.5.5 0 0 0 10 9.5V7.5a.5.5 0 0 1-.5-.5H3.882a.5.5 0 0 0-.447.276l-.447.895A1.5 1.5 0 0 1 1 11.482V13H0V7.118a1.5 1.5 0 0 1 .83-1.342l.895-.447A.5.5 0 0 0 2 4.882V4zM1 14v.5A1.5 1.5 0 0 0 2.5 16h3A1.5 1.5 0 0 0 7 14.5V14zm8 0v.5a1.5 1.5 0 0 0 1.5 1.5h3a1.5 1.5 0 0 0 1.5-1.5V14zm-1.5-4a.5.5 0 0 0-.5.5V12a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5V10.5a.5.5 0 0 0-.5-.5zm-5 0a.5.5 0 0 0-.5.5V12a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5V10.5a.5.5 0 0 0-.5-.5z"/> </svg>
+             开始漫游
+         </button>
+    </div>
+</form>
+{% else %} {# No content to wander #}
+<div class="alert alert-warning text-center" role="alert">
+  <h4 class="alert-heading">词库空空如也！</h4>
+  <p>你的词库里还没有单词或搭配，无法进行漫游。</p>
+  <hr>
+  <p class="mb-0">请先 <a href="{{ url_for('concept.add_concept') }}" class="alert-link">添加一些单词</a> 或 <a href="{{ url_for('concept.import_csv') }}" class="alert-link">导入单词</a> 再来吧！</p>
+</div>
+ <div class="mt-4 text-center">
+     <a href="{{ url_for('main.index') }}" class="btn btn-secondary">返回仪表盘</a>
+ </div>
+{% endif %}
+
+</div> {# End Col #}
+</div> {# End Row #}
+{% endblock %}
+
+{% block scripts_extra %}
+{# Basic Bootstrap form validation script if desired #}
+<script>
+(function () {
+  'use strict'
+  var forms = document.querySelectorAll('.needs-validation')
+  Array.prototype.slice.call(forms)
+    .forEach(function (form) {
+      form.addEventListener('submit', function (event) {
+        // Custom check for radio buttons if needed
+        const wanderMode = form.querySelector('input[name="wander_mode"]:checked');
+        if (!wanderMode || (wanderMode.value === 'concept' && {{ total_concepts }} === 0) || (wanderMode.value === 'collocation' && {{ total_collocations }} === 0)) {
+             // Prevent submission if selected mode has no items
+             alert("选择的漫游模式当前没有可用的内容。"); // Simple alert
+             event.preventDefault();
+             event.stopPropagation();
+             return;
+        }
+        if (!form.checkValidity()) {
+          event.preventDefault()
+          event.stopPropagation()
+        }
+        form.classList.add('was-validated')
+      }, false)
+    })
+})()
+</script>
+{% endblock %}

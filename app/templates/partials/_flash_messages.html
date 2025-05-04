@@ -1,0 +1,15 @@
+{# partials/_flash_messages.html #}
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="flash-messages-container mb-3">
+        {% for category, message in messages %}
+        {# Map categories to Bootstrap alert types #}
+        {% set alert_type = category if category in ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light', 'dark'] else 'info' %}
+        <div class="alert alert-{{ alert_type }} alert-dismissible fade show shadow-sm" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}

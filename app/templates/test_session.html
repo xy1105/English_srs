@@ -1,0 +1,310 @@
+{% extends 'base.html' %}
+
+{# Dynamic Title based on test type #}
+{% set page_title = "随机测试" %} {# Default #}
+{% if test_mode == 1 %}
+    {% set page_title = "随机测试 - 看词回忆" %}
+{% elif test_mode == 2 %}
+    {% if current_test_type == 'phrase' %} {% set page_title = "随机测试 - 搭配填空" %}
+    {% elif current_test_type == 'meaning' %} {% set page_title = "随机测试 - 单词释义" %}
+    {% else %} {% set page_title = "随机测试 - 回忆" %} {# Fallback for Mode 2 #}
+    {% endif %}
+{% elif test_mode == 3 %}
+     {% if current_test_type == 'blank_term' %} {% set page_title = "随机测试 - 列表回忆 (填单词)" %}
+     {% elif current_test_type == 'blank_definition' %} {% set page_title = "随机测试 - 列表回忆 (填释义)" %}
+     {% else %} {% set page_title = "随机测试 - 列表回忆" %}
+     {% endif %}
+{% endif %}
+{% block title %}{{ page_title }} - 单词记忆 SRS{% endblock %}
+
+
+{% block head_extra %}
+{# Styles specific to test session are now mainly in style.css #}
+<style>
+    /* Minor adjustments if needed */
+    .test-card .display-3 { font-size: 3rem; }
+    .judgment-buttons .btn { min-width: 130px; }
+    .session-controls { position: absolute; top: 1rem; right: 1rem; z-index: 10; }
+
+    /* Mode 3 List Recall Styles */
+    .list-recall-table td {
+        vertical-align: top; /* Align all cell content to the top */
+        padding-top: 0.8rem;
+        padding-bottom: 0.8rem;
+    }
+    .list-recall-table .prompt-column {
+        font-size: 0.95em;
+        padding-left: 0.8rem; /* Add padding to prompt column */
+    }
+    .list-recall-table .prompt-column .term { font-weight: bold; font-size: 1.1em; }
+    .list-recall-table .prompt-column .phonetic { color: #6c757d; font-size: 0.9em; }
+    .list-recall-table .prompt-column ul { margin-bottom: 0 !important; padding-left: 0; list-style: none;}
+    .list-recall-table .prompt-column li { margin-bottom: 0.2rem; }
+
+    .list-recall-table .blank-area {
+        min-height: 60px;
+        border-bottom: 1px dashed #adb5bd;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        display: flex;
+        align-items: center; /* Center placeholder text vertically */
+        justify-content: center; /* Center placeholder text horizontally */
+        text-align: center;
+        padding: 0.4rem 0.6rem;
+    }
+    /* Don't add hover effect to blank area itself, let row handle it */
+    /* .list-recall-table .blank-area:hover { background-color: rgba(0, 0, 0, 0.05); } */
+
+    /* Placeholder text before revealing */
+    .list-recall-table .reveal-placeholder {
+         color: #6c757d;
+         font-style: italic;
+         font-size: 0.9em;
+    }
+    /* Answer content */
+    .list-recall-table .answer-content {
+        display: none; /* Hidden by default */
+        font-size: 0.9em;
+        color: #0d6efd; /* Revealed answer color */
+        margin-top: 4px;
+        text-align: left;
+        width: 100%;
+    }
+    .list-recall-table .blank-area.revealed {
+        cursor: default;
+        border-bottom-style: solid;
+        justify-content: flex-start; /* Align revealed content left */
+        align-items: flex-start; /* Align revealed content top */
+        text-align: left;
+        /* Background should be inherited from row */
+    }
+    .list-recall-table .blank-area.revealed .reveal-placeholder { display: none; }
+    .list-recall-table .blank-area.revealed .answer-content { display: block; }
+    .list-recall-table .answer-content .term { font-weight: bold; font-size: 1.1em; }
+    .list-recall-table .answer-content .phonetic { color: #6c757d; font-size: 0.9em; }
+    .list-recall-table .answer-content ul { margin-bottom: 0 !important; padding-left: 0; list-style: none; }
+    .list-recall-table .answer-content li { margin-bottom: 0.2rem; }
+
+    /* Ensure row background covers ALL cells consistently */
+    .list-recall-table tr.table-success td,
+    .list-recall-table tr.table-danger td {
+         /* Use Bootstrap's variables directly for exact match */
+         background-color: var(--bs-table-bg-state, var(--bs-success-bg-subtle)) !important;
+         color: var(--bs-table-color-state, var(--bs-success-text-emphasis)) !important; /* Adjust text color too */
+    }
+     .list-recall-table tr.table-danger td {
+         background-color: var(--bs-table-bg-state, var(--bs-danger-bg-subtle)) !important;
+         color: var(--bs-table-color-state, var(--bs-danger-text-emphasis)) !important;
+    }
+    /* Override hover effect on marked rows */
+     .list-recall-table tr.table-success:hover td,
+     .list-recall-table tr.table-danger:hover td {
+         background-color: inherit !important; /* Prevent hover change after marking */
+     }
+
+
+    .list-recall-table .correct-indicator, .list-recall-table .incorrect-indicator {
+        font-size: 1.3em;
+        margin-left: 8px;
+        vertical-align: middle;
+        font-weight: bold;}
+    .judgment-buttons-list .btn { padding: 0.2rem 0.5rem; }
+    .judgment-buttons-list svg { width: 1em; height: 1em; }
+</style>
+{% endblock %}
+
+{% block content %}
+{# --- Progress Bar (Only for Mode 1 & 2) --- #}
+{% if test_mode != 3 %}
+<div class="position-relative"> {# Relative container for absolute positioning of controls #}
+<div class="progress-container mb-3">
+    <div class="progress" style="height: 8px;" role="progressbar" aria-label="测试进度" aria-valuenow="{{ current_progress }}" aria-valuemin="1" aria-valuemax="{{ total_in_session }}">
+      {# Use info color for test progress #}
+      <div class="progress-bar progress-bar-striped progress-bar-animated bg-info" style="width: {{ (current_progress / total_in_session * 100)|round }}%;"></div>
+    </div>
+    <div class="text-center text-muted small mt-1">{{ current_progress }} / {{ total_in_session }}</div>
+</div>
+{% endif %}
+<p class="text-center text-muted small mb-3 fst-italic">提示：此测试结果不影响 SRS 复习计划。结果将记录在 <a href="{{ url_for('history.view_history') }}" class="text-muted">学习历史</a> 中。</p>
+
+{# --- Test Card (Mode 1 & 2) OR List Table (Mode 3) --- #}
+
+{# ================= MODE 1 & 2: Card View ================= #}
+{% if test_mode != 3 %}
+<div class="card test-card shadow-sm mb-4">
+    <div class="card-body p-lg-5 p-4 d-flex flex-column position-relative">
+
+        {# --- Session Controls (Quit Button) --- #}
+        <div class="session-controls">
+            <form action="{{ url_for('test.quit_session') }}" method="POST" class="d-inline" onsubmit="return confirm('确定要退出当前的测试会话吗？结果将不会保存。');">
+                <button type="submit" class="btn btn-sm btn-outline-danger" title="退出当前测试">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16"> <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/> </svg>
+                    退出
+                </button>
+            </form>
+        </div>
+
+        {# --- Question Area --- #}
+        <div class="question-area text-center mb-4">
+
+            {# --- Conditional Question Display --- #}
+            {% if current_test_type == 'phrase' and phrase_data %}
+                {# Mode 2b: Fill in Phrase Blank - Show MEANING first! #}
+                 <h2 class="card-title h4 mb-3 fw-normal text-muted">请根据提示词义，填写搭配中的空缺单词:</h2>
+                 {% if meanings_for_prompt %}
+                 <div class="mb-3 p-3 border-start border-5 border-secondary bg-light rounded-end w-100 text-start shadow-sm">
+                     <p class="small text-muted mb-1 fw-bold">提示词义:</p>
+                     <dl class="definition-list mb-0 small">
+                        {% for meaning in meanings_for_prompt %}
+                            <span class="me-2"><dt class="d-inline">{{ meaning.part_of_speech }}</dt> <dd class="d-inline ms-1">{{ meaning.definition }};</dd></span>
+                        {% endfor %}
+                    </dl>
+                 </div>
+                 {% else %}<p class="text-muted small mb-3">(该词无释义信息)</p>{% endif %}
+                 <div class="mt-3 p-3 border rounded bg-white w-100 shadow-sm">
+                     <p class="fs-4 lh-lg text-start">
+                         {{ phrase_data.blanked_phrase | replace(placeholder, '<span class="blank-placeholder">' + placeholder + '</span>') | safe }}
+                     </p>
+                     {% if phrase_data.blanked_example %}<p class="text-muted fst-italic mt-2 lh-lg small text-start">例: {{ phrase_data.blanked_example | replace(placeholder, '<span class="blank-placeholder">' + placeholder + '</span>') | safe }}</p>{% endif %}
+                     <label for="answerInputPhrase" class="form-label small visually-hidden">填空答案</label>
+                     <input type="text" class="form-control form-control-lg mt-3" id="answerInputPhrase" placeholder="在此输入空缺单词" autofocus>
+                     <div class="form-text small text-start mt-2">输入单词，然后点击“显示答案”或按 Enter 键进行对照。</div>
+                 </div>
+                  <button type="button" id="showHintBtn" class="btn btn-sm btn-outline-warning mt-3">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-lightbulb me-1" viewBox="0 0 16 16"> <path d="M2 6a6 6 0 1 1 10.174 4.31c-.203.196-.359.4-.453.619l-.762 1.769A.5.5 0 0 1 10.5 13a.5.5 0 0 1 0 1 .5.5 0 0 1 0 1l-.224.447a1 1 0 0 1-.894.553H6.618a1 1 0 0 1-.894-.553L5.5 15a.5.5 0 0 1 0-1 .5.5 0 0 1 0-1 .5.5 0 0 1-.46-.302l-.761-1.77a1.97 1.97 0 0 0-.454-.618A6 6 0 0 1 2 6m6 8.5a.5.5 0 0 1 .5-.5h.5a.5.5 0 0 1 0 1l-.224.447a.5.5 0 0 1-.447.275H8.17a.5.5 0 0 1-.447-.275L7.5 15a.5.5 0 0 1 .5-.5M8 1a4 4 0 0 0-3.447 6.168A2.5 2.5 0 0 0 6 12.5a.5.5 0 0 1 .5.5v.5h3v-.5a.5.5 0 0 1 .5-.5c.253 0 .488-.062.7-.175A4 4 0 0 0 8 1"/> </svg>
+                     需要提示? (查看原句)
+                 </button>
+                 <div id="hintSection" class="hint-section mt-2 text-muted small w-100 bg-light p-2 rounded border">
+                     <p class="mb-1">原句是: <span class="original-phrase-hint">"{{ phrase_data.original_phrase }}"</span></p>
+                 </div>
+            {% elif test_mode == 2 and current_test_type == 'meaning' %}
+                 <h2 class="card-title display-3 mb-1">{{ concept.term }}</h2>
+                 {% if concept.phonetic %}
+                    <p class="text-muted fs-5 mb-3">[{{ concept.phonetic }}]
+                        {% if concept.audio_url %}<button type="button" class="btn btn-sm btn-outline-secondary btn-play-audio ms-2" onclick="playAudio('{{ concept.audio_url }}')" title="播放发音"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-volume-up-fill" viewBox="0 0 16 16"> <path d="M11.536 14.01A8.473 8.473 0 0 0 14.026 8a8.473 8.473 0 0 0-2.49-6.01l-.708.707A7.476 7.476 0 0 1 13.025 8c0 2.071-.84 3.946-2.197 5.303l.708.707z"/> <path d="M10.121 12.596A6.48 6.48 0 0 0 12.025 8a6.48 6.48 0 0 0-1.904-4.596l-.707.707A5.483 5.483 0 0 1 11.025 8a5.483 5.483 0 0 1-1.61 3.89l.706.706z"/> <path d="M8.707 11.182A4.486 4.486 0 0 0 10.025 8a4.486 4.486 0 0 0-1.318-3.182L8 5.525A3.489 3.489 0 0 1 9.025 8 3.489 3.489 0 0 1 8 10.475l.707.707zM6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06z"/> </svg></button>{% endif %}
+                    </p>
+                 {% endif %}
+                 <div class="mt-3 w-100">
+                    <label for="answerInputMeaning" class="form-label small text-muted">请尝试输入该单词的含义：</label>
+                    <textarea class="form-control form-control-lg" id="answerInputMeaning" rows="3" autofocus placeholder="在此输入释义..."></textarea>
+                    <div class="form-text small mt-1">输入后，点击“显示答案”或按 Enter 键进行对照。</div>
+                </div>
+            {% else %}
+                <h2 class="card-title display-3 mb-1">{{ concept.term }}</h2>
+                 {% if concept.phonetic %}
+                    <p class="text-muted fs-5 mb-3">[{{ concept.phonetic }}]
+                        {% if concept.audio_url %}<button type="button" class="btn btn-sm btn-outline-secondary btn-play-audio ms-2" onclick="playAudio('{{ concept.audio_url }}')" title="播放发音"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-volume-up-fill" viewBox="0 0 16 16"> <path d="M11.536 14.01A8.473 8.473 0 0 0 14.026 8a8.473 8.473 0 0 0-2.49-6.01l-.708.707A7.476 7.476 0 0 1 13.025 8c0 2.071-.84 3.946-2.197 5.303l.708.707z"/> <path d="M10.121 12.596A6.48 6.48 0 0 0 12.025 8a6.48 6.48 0 0 0-1.904-4.596l-.707.707A5.483 5.483 0 0 1 11.025 8a5.483 5.483 0 0 1-1.61 3.89l.706.706z"/> <path d="M8.707 11.182A4.486 4.486 0 0 0 10.025 8a4.486 4.486 0 0 0-1.318-3.182L8 5.525A3.489 3.489 0 0 1 9.025 8 3.489 3.489 0 0 1 8 10.475l.707.707zM6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06z"/> </svg></button>{% endif %}
+                    </p>
+                 {% endif %}
+                 <p class="text-muted mt-3 lead">请回忆该单词的含义和用法。</p>
+            {% endif %}
+             <button id="showAnswerBtn" class="btn btn-outline-primary btn-lg mt-4">显示答案 (空格键)</button>
+        </div>
+        <div id="answerSection" class="answer-section flex-grow-1 d-flex flex-column">
+            <div class="answer-content mb-auto">
+                {% if current_test_type == 'phrase' and phrase_data %}<div class="alert alert-info small py-2 px-3 mb-3 text-start" role="alert"><span class="fw-semibold">正确填空应为:</span> <span class="correct-blank-answer ms-1">{{ phrase_data.correct_answer }}</span></div><h4 class="mb-1 text-start">{{ concept.term }}</h4>{% if concept.phonetic %}<p class="text-muted fs-6 mb-3 text-start">[{{ concept.phonetic }}]{% if concept.audio_url %}<button type="button" class="btn btn-sm btn-outline-secondary btn-play-audio ms-2" onclick="playAudio('{{ concept.audio_url }}')" title="播放发音"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-volume-up-fill" viewBox="0 0 16 16"> <path d="M11.536 14.01A8.473 8.473 0 0 0 14.026 8a8.473 8.473 0 0 0-2.49-6.01l-.708.707A7.476 7.476 0 0 1 13.025 8c0 2.071-.84 3.946-2.197 5.303l.708.707z"/> <path d="M10.121 12.596A6.48 6.48 0 0 0 12.025 8a6.48 6.48 0 0 0-1.904-4.596l-.707.707A5.483 5.483 0 0 1 11.025 8a5.483 5.483 0 0 1-1.61 3.89l.706.706z"/> <path d="M8.707 11.182A4.486 4.486 0 0 0 10.025 8a4.486 4.486 0 0 0-1.318-3.182L8 5.525A3.489 3.489 0 0 1 9.025 8 3.489 3.489 0 0 1 8 10.475l.707.707zM6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06z"/> </svg></button>{% endif %}</p>{% endif %}<hr class="mb-3">{% endif %}
+                <div class="text-start">
+                    {% if concept.etymology %} <div class="mb-3 pb-2 border-bottom"> <h6 class="text-muted small fw-bold text-uppercase">词源/词根</h6> <p class="small">{{ concept.etymology }}</p> </div> {% endif %}
+                    {% if concept.synonyms %} <div class="mb-3 pb-2 border-bottom"> <h6 class="text-muted small fw-bold text-uppercase">同义/近义</h6> <p class="small">{{ concept.synonyms }}</p> </div> {% endif %}
+                    {% if concept.meanings %} <div class="mb-3 pb-2 border-bottom"> <h6 class="text-muted small fw-bold text-uppercase">含义</h6> <dl class="definition-list mb-0"> {% for meaning in concept.meanings %} <dt>{{ meaning.part_of_speech }}</dt> <dd>{{ meaning.definition }}</dd> {% endfor %} </dl> </div> {% endif %}
+                    {% if concept.collocations %} <div class="mb-3"> <h6 class="text-muted small fw-bold text-uppercase">搭配/例句</h6> {% for coll in concept.collocations %} <div class="collocation-item"> <strong>{{ coll.phrase }}</strong> {% if coll.example %}<span class="example d-block">{{ coll.example }}</span>{% endif %} </div> {% endfor %} </div> {% endif %}
+                </div>
+            </div>
+            <div class="mt-4 pt-3 border-top judgment-buttons text-center">
+                <p class="mb-2 text-muted small">根据你的回忆或填写，这题算对了吗？ (可用左右方向键或 C/I 键)</p>
+                <form method="POST" action="{{ url_for('test.submit_test') }}" id="judgmentForm">
+                     <button type="submit" name="result" value="incorrect" class="btn btn-lg btn-danger"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-lg me-1" viewBox="0 0 16 16"> <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/> </svg> 错了 (← / I)</button>
+                     <button type="submit" name="result" value="correct" class="btn btn-lg btn-success ms-2"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-lg me-1" viewBox="0 0 16 16"> <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022Z"/> </svg> 对了 (→ / C)</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+{# ================= MODE 3: List View ================= #}
+{% elif test_mode == 3 and concepts_list %}
+<div class="list-recall-container position-relative">
+    <div class="session-controls mb-3 text-end">
+        <form action="{{ url_for('test.quit_session') }}" method="POST" class="d-inline" onsubmit="return confirm('确定要退出当前的测试会话吗？结果将不会保存。');">
+            <button type="submit" class="btn btn-sm btn-outline-danger" title="退出当前测试">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16"> <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/> </svg>
+                退出
+            </button>
+        </form>
+    </div>
+
+    <h3 class="mb-3">列表回忆模式</h3>
+    <p class="text-muted mb-3">点击 {{ '右侧 [点击显示单词]' if current_test_type == 'blank_term' else '右侧 [点击显示释义]' }} 列来查看答案并标记对错。</p>
+
+    <div class="table-responsive shadow-sm border rounded">
+        {# REMOVED table-striped and table-hover #}
+        <table class="table list-recall-table mb-0">
+            <thead class="table-light">
+                <tr class="small text-muted">
+                    <th style="width: 45%;">{{ '中文释义' if current_test_type == 'blank_term' else '英文单词 / 音标' }} (提示)</th>
+                    <th style="width: 45%;">{{ '英文单词 / 音标' if current_test_type == 'blank_term' else '中文释义' }} (点击显示答案)</th>
+                    <th style="width: 10%;" class="text-center">对错?</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for concept in concepts_list %}
+                <tr data-concept-id="{{ concept.id }}">
+                    {# --- Prompt Column (Not Clickable) --- #}
+                    <td class="prompt-column">
+                        {% if current_test_type == 'blank_term' %}
+                            {% if concept.meanings %}<ul>{% for m in concept.meanings %}<li><span class="fw-semibold">{{ m.part_of_speech }}</span> {{ m.definition }}</li>{% endfor %}</ul>{% else %}<span class="text-muted small">(无释义)</span>{% endif %}
+                        {% else %} {# blank_definition #}
+                            <span class="term">{{ concept.term }}</span>
+                            {% if concept.phonetic %}<small class="d-block phonetic">[{{ concept.phonetic }}]</small>{% endif %}
+                            {% if concept.audio_url %}<button type="button" class="btn btn-sm btn-outline-secondary btn-play-audio ms-2 mt-1 py-0 px-1" onclick="playAudio('{{ concept.audio_url }}')" title="播放发音"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-volume-up-fill" viewBox="0 0 16 16"> <path d="M11.536 14.01A8.473 8.473 0 0 0 14.026 8a8.473 8.473 0 0 0-2.49-6.01l-.708.707A7.476 7.476 0 0 1 13.025 8c0 2.071-.84 3.946-2.197 5.303l.708.707z"/> <path d="M10.121 12.596A6.48 6.48 0 0 0 12.025 8a6.48 6.48 0 0 0-1.904-4.596l-.707.707A5.483 5.483 0 0 1 11.025 8a5.483 5.483 0 0 1-1.61 3.89l.706.706z"/> <path d="M8.707 11.182A4.486 4.486 0 0 0 10.025 8a4.486 4.486 0 0 0-1.318-3.182L8 5.525A3.489 3.489 0 0 1 9.025 8 3.489 3.489 0 0 1 8 10.475l.707.707zM6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06z"/> </svg></button>{% endif %}
+                        {% endif %}
+                    </td>
+                    {# --- Answer Column (Clickable Blank Area) --- #}
+                    <td class="blank-area" data-bs-toggle="tooltip" title="点击显示/隐藏答案">
+                         <span class="reveal-placeholder">[{{ '点击显示单词' if current_test_type == 'blank_term' else '点击显示释义' }}]</span>
+                         <div class="answer-content">
+                            {% if current_test_type == 'blank_term' %}
+                                <span class="term">{{ concept.term }}</span>
+                                {% if concept.phonetic %}<small class="d-block phonetic">[{{ concept.phonetic }}]</small>{% endif %}
+                                {% if concept.audio_url %}<button type="button" class="btn btn-sm btn-outline-secondary btn-play-audio ms-2 mt-1 py-0 px-1" onclick="playAudio('{{ concept.audio_url }}')" title="播放发音"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-volume-up-fill" viewBox="0 0 16 16"> <path d="M11.536 14.01A8.473 8.473 0 0 0 14.026 8a8.473 8.473 0 0 0-2.49-6.01l-.708.707A7.476 7.476 0 0 1 13.025 8c0 2.071-.84 3.946-2.197 5.303l.708.707z"/> <path d="M10.121 12.596A6.48 6.48 0 0 0 12.025 8a6.48 6.48 0 0 0-1.904-4.596l-.707.707A5.483 5.483 0 0 1 11.025 8a5.483 5.483 0 0 1-1.61 3.89l.706.706z"/> <path d="M8.707 11.182A4.486 4.486 0 0 0 10.025 8a4.486 4.486 0 0 0-1.318-3.182L8 5.525A3.489 3.489 0 0 1 9.025 8 3.489 3.489 0 0 1 8 10.475l.707.707zM6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06z"/> </svg></button>{% endif %}
+                            {% else %} {# blank_definition #}
+                                {% if concept.meanings %}<ul>{% for m in concept.meanings %}<li><span class="fw-semibold">{{ m.part_of_speech }}</span> {{ m.definition }}</li>{% endfor %}</ul>{% else %}<span class="text-muted small">(无释义)</span>{% endif %}
+                            {% endif %}
+                         </div>
+                    </td>
+                    {# --- Judgment buttons/indicator --- #}
+                    <td class="text-center">
+                        <div class="btn-group btn-group-sm judgment-buttons-list" role="group" aria-label="Mark Correct/Incorrect">
+                             <button type="button" class="btn btn-outline-danger mark-incorrect" title="标记为错误 (I)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16"> <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/> </svg></button>
+                             <button type="button" class="btn btn-outline-success mark-correct" title="标记为正确 (C)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-lg" viewBox="0 0 16 16"> <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022Z"/> </svg></button>
+                        </div>
+                         <span class="correct-indicator text-success d-none">✓</span>
+                         <span class="incorrect-indicator text-danger d-none">✗</span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="text-center mt-4">
+        <form method="POST" action="{{ url_for('test.submit_test') }}" id="judgmentForm">
+             <input type="hidden" name="total_correct" id="total_correct_input" value="0">
+             <input type="hidden" name="total_incorrect" id="total_incorrect_input" value="0">
+             <p class="mb-2"><span id="marked_count">0</span> / {{ concepts_list|length }} 项已标记</p>
+            <button type="submit" class="btn btn-lg btn-success" id="submitListResultsBtn" disabled>
+                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-send-check-fill me-1" viewBox="0 0 16 16"> <path d="M15.964.686a.5.5 0 0 0-.65-.65L.767 5.855H.766l-.452.18a.5.5 0 0 0-.082.887l.41.26.001.002 4.995 3.178 1.59 2.498C8 14 8 13 8 12.5a4.5 4.5 0 0 1 5.026-4.47L15.964.686Zm-1.833 1.89L6.637 10.07l-.215-.338a.5.5 0 0 0-.154-.154l-.338-.215 7.494-7.494 1.178-.471z"/> <path d="M16 12.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0m-1.993-1.679a.5.5 0 0 0-.686.172l-1.17 1.95-.547-.547a.5.5 0 0 0-.708.708l.774.773a.75.75 0 0 0 1.174-.144l1.335-2.226a.5.5 0 0 0-.172-.686"/> </svg>
+                完成测试并提交结果
+            </button>
+        </form>
+    </div>
+</div>
+{% else %}
+    <div class="alert alert-danger">无法加载测试内容。请返回设置页面重试。</div>
+    <div class="mt-4 text-center"><a href="{{ url_for('test.setup') }}" class="btn btn-secondary">返回测试设置</a></div>
+{% endif %}
+{% endblock %}
+
+{% block scripts_extra %}
+<script src="{{ url_for('static', filename='js/test.js') }}"></script>
+{% endblock %}

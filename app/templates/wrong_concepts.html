@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}易错词列表 - 单词记忆 SRS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>易错词列表</h1>
+     <a href="{{ url_for('practice.start_session', mode='hardest') }}" class="btn btn-warning {% if not concepts %}disabled{% endif %}" title="开始复习这些易错词">
+         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-play-fill me-1" viewBox="0 0 16 16"> <path d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393"/> </svg>
+        复习难词
+     </a>
+</div>
+<p class="text-muted mb-4">根据累计错误次数排序，优先显示你最容易记错的单词。点击单词可查看或编辑详情。</p>
+
+{% if concepts %}
+<div class="list-group shadow-sm">
+    {% for concept in concepts %}
+    {# Use different border colors based on error count severity #}
+    {% set border_color_class = 'border-danger' if concept.error_count > 5 else 'border-warning' if concept.error_count > 1 else 'border-secondary' %}
+    <div class="list-group-item list-group-item-action flex-column align-items-start p-3 border-start border-5 {{ border_color_class }}">
+        <div class="d-flex w-100 justify-content-between mb-1">
+            {# Concept Term linked to edit page #}
+            <h5 class="mb-1">
+                 <a href="{{ url_for('concept.edit_concept', concept_id=concept.id) }}" class="text-decoration-none text-primary">{{ concept.term }}</a>
+                 {% if concept.phonetic %}
+                    <small class="text-muted fw-normal ms-2">[{{ concept.phonetic }}]</small>
+                 {% endif %}
+            </h5>
+             {# Error Count Badge with Tooltip #}
+             <span class="badge bg-danger rounded-pill fs-6" data-bs-toggle="tooltip" title="累计错误次数">{{ concept.error_count }}</span>
+        </div>
+        {# Additional Info: Interval and Last Reviewed Date #}
+        <div class="d-flex w-100 justify-content-between small text-muted mt-1">
+             <span>
+                 当前间隔: <span class="fw-medium">{{ concept.srs_interval }} 天</span>
+             </span>
+             <span>
+                下次复习: {% if concept.srs_due_date %}
+                             <span class="{{ 'text-danger' if parse_datetime_utc(concept.srs_due_date) <= now_utc() else '' }}" title="{{ format_datetime_local(concept.srs_due_date, '%Y-%m-%d %H:%M') }}">
+                                {{ format_due_date_relative(concept.srs_due_date) }}
+                             </span>
+                         {% else %}
+                             N/A
+                         {% endif %}
+             </span>
+             <span>
+                 {% if concept.last_reviewed_date %}
+                     上次复习: {{ format_datetime_local(concept.last_reviewed_date, '%Y-%m-%d') }}
+                 {% else %}
+                     从未复习
+                 {% endif %}
+             </span>
+        </div>
+         {# Action Button #}
+         <div class="mt-2">
+             <a href="{{ url_for('concept.edit_concept', concept_id=concept.id) }}" class="btn btn-sm btn-outline-secondary">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square me-1" viewBox="0 0 16 16"> <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/> <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/> </svg>
+                 查看/编辑
+             </a>
+             {# Optional: Add a button to reset error count? Requires backend route #}
+             {# <form action="{{ url_for('practice.reset_error_count', concept_id=concept.id) }}" method="post" style="display: inline-block; margin-left: 5px;">
+                 <button type="submit" class="btn btn-sm btn-outline-warning" title="重置错误计数">重置错误</button>
+             </form> #}
+         </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %} {# No concepts found in the wrong list #}
+<div class="alert alert-success text-center" role="alert">
+  <h4 class="alert-heading">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-check-circle-fill me-2" viewBox="0 0 16 16"> <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/> </svg>
+      太棒了!
+  </h4>
+  <p>目前没有记录到错误次数较多的单词 (错误次数 >= 1 的单词会显示在此)。</p>
+  <hr>
+  <p class="mb-0">继续努力，保持学习！</p>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts_extra %}
+{# Include the specific JS file for this page (mainly for tooltips) #}
+<script src="{{ url_for('static', filename='js/wrong_concepts.js') }}"></script>
+{% endblock %}

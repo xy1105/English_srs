@@ -1,0 +1,14 @@
+{# templates/500.html #}
+{% extends 'base.html' %}
+
+{% block title %}服务器错误 (500){% endblock %}
+
+{% block content %}
+<div class="text-center py-5">
+    <h1 class="display-1 text-danger">500</h1>
+    <h2>服务器内部错误</h2>
+    <p class="lead">抱歉，处理您的请求时服务器遇到了问题。</p>
+    <p class="text-muted">我们已经记录了此错误，会尽快处理。</p>
+    <a href="{{ url_for('main.index') }}" class="btn btn-primary mt-3">返回首页</a>
+</div>
+{% endblock %}

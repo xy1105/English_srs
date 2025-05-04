@@ -1,0 +1,61 @@
+{# partials/_collocation_fields.html #}
+{# Renders existing collocation fields and provides a template for new ones #}
+
+{# --- Render Existing/Error Collocations --- #}
+{# Determine which list to render from #}
+{% set collocations_to_render = concept.collocations if concept and not is_edit_error else concept_data_on_error.collocations_on_error if concept_data_on_error else [] %}
+
+{% for collocation in collocations_to_render %}
+<div class="collocation-group border p-3 mb-3 rounded bg-white position-relative shadow-sm"> {# Changed background #}
+    <button type="button" class="btn-close position-absolute top-0 end-0 mt-1 me-1 remove-item-btn" aria-label="移除此搭配" title="移除此搭配"></button>
+    <div class="row g-2">
+        <div class="col-md-5">
+            <label for="collocations-{{ loop.index0 }}-phrase" class="form-label small mb-1">搭配/短语 <span class="text-danger">*</span></label>
+            {# Existing items ARE required if they are rendered #}
+            <input type="text" class="form-control form-control-sm" id="collocations-{{ loop.index0 }}-phrase" name="collocations[{{ loop.index0 }}][phrase]" value="{{ collocation.phrase }}" placeholder="e.g., run out of" required>
+        </div>
+        <div class="col-md-7">
+            <label for="collocations-{{ loop.index0 }}-example" class="form-label small mb-1">例句/说明</label>
+            <textarea class="form-control form-control-sm" id="collocations-{{ loop.index0 }}-example" name="collocations[{{ loop.index0 }}][example]" rows="1" placeholder="可选：举例说明用法">{{ collocation.example }}</textarea> {# Rows set to 1 #}
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{# --- Render ONE empty field group IF adding new OR editing and no collocations were submitted --- #}
+{% if not concept or (is_edit_error and not collocations_to_render) %}
+<div class="collocation-group border p-3 mb-3 rounded bg-white position-relative shadow-sm">
+     {# Hide remove button on the initial empty row for 'add' mode #}
+    <button type="button" class="btn-close position-absolute top-0 end-0 mt-1 me-1 remove-item-btn {% if not concept %}d-none{% endif %}" aria-label="移除此搭配" title="移除此搭配"></button>
+    <div class="row g-2">
+        <div class="col-md-5">
+            <label for="collocations-{{ collocations_to_render|length }}-phrase" class="form-label small mb-1">搭配/短语</label> {# Removed asterisk #}
+            {# Initial empty row's phrase is NOT required #}
+            <input type="text" class="form-control form-control-sm" id="collocations-{{ collocations_to_render|length }}-phrase" name="collocations[{{ collocations_to_render|length }}][phrase]" placeholder="e.g., run out of">
+        </div>
+        <div class="col-md-7">
+            <label for="collocations-{{ collocations_to_render|length }}-example" class="form-label small mb-1">例句/说明</label>
+            <textarea class="form-control form-control-sm" id="collocations-{{ collocations_to_render|length }}-example" name="collocations[{{ collocations_to_render|length }}][example]" rows="1" placeholder="可选：举例说明用法"></textarea>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+
+{# --- Template for adding new collocation fields via JS (hidden) --- #}
+<template id="collocationTemplate">
+     <div class="collocation-group border p-3 mb-3 rounded bg-white position-relative shadow-sm">
+        <button type="button" class="btn-close position-absolute top-0 end-0 mt-1 me-1 remove-item-btn" aria-label="移除此搭配" title="移除此搭配"></button>
+        <div class="row g-2">
+            <div class="col-md-5">
+                <label for="collocations-__INDEX__-phrase" class="form-label small mb-1">搭配/短语 <span class="text-danger">*</span></label>
+                {# Dynamically added rows' phrase IS required #}
+                <input type="text" class="form-control form-control-sm" id="collocations-__INDEX__-phrase" name="collocations[__INDEX__][phrase]" placeholder="e.g., run out of" required>
+            </div>
+            <div class="col-md-7">
+                <label for="collocations-__INDEX__-example" class="form-label small mb-1">例句/说明</label>
+                <textarea class="form-control form-control-sm" id="collocations-__INDEX__-example" name="collocations[__INDEX__][example]" rows="1" placeholder="可选：举例说明用法"></textarea>
+            </div>
+        </div>
+    </div>
+</template>
