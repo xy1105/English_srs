@@ -5,6 +5,9 @@
 **软件截图(支持桌面和手机端):**
 ![PixPin_2025-05-04_22-37-36](https://github.com/user-attachments/assets/469f63cc-0625-46d7-8353-0303bb17d9a0)
 
+![Screenshot_20250504_224404_Edge](https://github.com/user-attachments/assets/be32be91-5807-425f-b92d-159b6b31b9bf)
+
+
 
 ## 目录
 
