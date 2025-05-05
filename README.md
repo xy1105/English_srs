@@ -56,7 +56,7 @@
 
 *   **方式一 (Git):** 如果你安装了 Git，在终端运行：
     ```bash
-    git clone https://github.com/YourUsername/english-srs-flask.git # <-- 替换为你的仓库地址
+    git clone https://github.com/xy1105/English_srs.git
     cd english-srs-flask
     ```
 *   **方式二 (下载 ZIP):** 在 GitHub 仓库页面点击 "Code" -> "Download ZIP"，然后解压到你想要的位置。
